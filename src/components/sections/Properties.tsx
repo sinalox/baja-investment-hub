@@ -1,74 +1,74 @@
-import { useState } from 'react';
-import { MapPin, BedDouble, Bath, Maximize, ArrowRight } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { MapPin, BedDouble, Bath, Maximize, ArrowRight, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
+import type { Database } from '@/integrations/supabase/types';
+
+// Fallback images for properties without images
 import property1 from '@/assets/property-1.jpg';
 import property2 from '@/assets/property-2.jpg';
 import property3 from '@/assets/property-3.jpg';
 import property4 from '@/assets/property-4.jpg';
 
+const fallbackImages = [property1, property2, property3, property4];
+
+type Property = Database['public']['Tables']['properties']['Row'];
+
 const categories = [
   { id: 'all', label: 'Todos' },
-  { id: 'casas', label: 'Casas' },
-  { id: 'oficinas', label: 'Oficinas' },
-  { id: 'lotes', label: 'Lotes Residenciales' },
+  { id: 'casa', label: 'Casas' },
+  { id: 'oficina', label: 'Oficinas' },
+  { id: 'lote', label: 'Lotes Residenciales' },
   { id: 'inversion', label: 'Inversión' },
 ];
 
-const properties = [
-  {
-    id: 1,
-    title: 'Villa Oceánica Premium',
-    type: 'Casa',
-    category: 'casas',
-    location: 'Ensenada, Baja California',
-    price: '$8,500,000 MXN',
-    image: property1,
-    beds: 4,
-    baths: 3,
-    area: '350 m²',
-    featured: true,
-  },
-  {
-    id: 2,
-    title: 'Oficina Ejecutiva Plaza Mar',
-    type: 'Oficina',
-    category: 'oficinas',
-    location: 'Tijuana, Baja California',
-    price: '$3,200,000 MXN',
-    image: property2,
-    area: '180 m²',
-    featured: false,
-  },
-  {
-    id: 3,
-    title: 'Lote Residencial Vista Pacífico',
-    type: 'Lote Residencial',
-    category: 'lotes',
-    location: 'Rosarito, Baja California',
-    price: '$1,850,000 MXN',
-    image: property3,
-    area: '800 m²',
-    featured: false,
-  },
-  {
-    id: 4,
-    title: 'Terreno Frente al Mar',
-    type: 'Inversión',
-    category: 'inversion',
-    location: 'San Quintín, Baja California',
-    price: '$4,500,000 MXN',
-    image: property4,
-    area: '2,500 m²',
-    featured: true,
-  },
-];
+const typeLabels: Record<string, string> = {
+  casa: 'Casa',
+  oficina: 'Oficina',
+  lote: 'Lote Residencial',
+  inversion: 'Inversión',
+};
 
 const Properties = () => {
   const [activeCategory, setActiveCategory] = useState('all');
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProperties = async () => {
+      const { data, error } = await supabase
+        .from('properties')
+        .select('*')
+        .eq('status', 'active')
+        .order('featured', { ascending: false })
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching properties:', error);
+      } else {
+        setProperties(data || []);
+      }
+      setLoading(false);
+    };
+
+    fetchProperties();
+  }, []);
 
   const filteredProperties = activeCategory === 'all'
     ? properties
-    : properties.filter(p => p.category === activeCategory);
+    : properties.filter(p => p.type === activeCategory);
+
+  const formatPrice = (price: number, currency: string) => {
+    return new Intl.NumberFormat('es-MX', {
+      style: 'currency',
+      currency: currency,
+      minimumFractionDigits: 0,
+    }).format(price);
+  };
+
+  const getPropertyImage = (property: Property, index: number) => {
+    return property.image_url || fallbackImages[index % fallbackImages.length];
+  };
 
   return (
     <section id="propiedades" className="section-padding bg-secondary/50">
@@ -102,73 +102,83 @@ const Properties = () => {
         </div>
 
         {/* Properties Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {filteredProperties.map((property) => (
-            <div
-              key={property.id}
-              className="property-card bg-background rounded-lg overflow-hidden group"
-            >
-              {/* Image */}
-              <div className="relative aspect-[4/3] overflow-hidden">
-                <img
-                  src={property.image}
-                  alt={property.title}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                />
-                {property.featured && (
-                  <div className="absolute top-3 left-3 bg-accent text-accent-foreground px-3 py-1 text-xs font-semibold rounded-sm">
-                    Destacado
-                  </div>
-                )}
-                <div className="absolute top-3 right-3 bg-background/90 backdrop-blur-sm px-3 py-1 text-xs font-medium rounded-sm">
-                  {property.type}
-                </div>
-              </div>
-
-              {/* Content */}
-              <div className="p-5">
-                <h3 className="font-serif text-lg font-medium mb-2 line-clamp-1">
-                  {property.title}
-                </h3>
-                <div className="flex items-center gap-1.5 text-muted-foreground text-sm mb-4">
-                  <MapPin className="h-4 w-4" />
-                  {property.location}
-                </div>
-
-                {/* Details */}
-                <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4 pb-4 border-b border-border">
-                  {property.beds && (
-                    <div className="flex items-center gap-1.5">
-                      <BedDouble className="h-4 w-4" />
-                      {property.beds}
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : filteredProperties.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            <p>No hay propiedades disponibles en esta categoría</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {filteredProperties.map((property, index) => (
+              <div
+                key={property.id}
+                className="property-card bg-background rounded-lg overflow-hidden group"
+              >
+                {/* Image */}
+                <div className="relative aspect-[4/3] overflow-hidden">
+                  <img
+                    src={getPropertyImage(property, index)}
+                    alt={property.title}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  />
+                  {property.featured && (
+                    <div className="absolute top-3 left-3 bg-accent text-accent-foreground px-3 py-1 text-xs font-semibold rounded-sm">
+                      Destacado
                     </div>
                   )}
-                  {property.baths && (
-                    <div className="flex items-center gap-1.5">
-                      <Bath className="h-4 w-4" />
-                      {property.baths}
-                    </div>
-                  )}
-                  <div className="flex items-center gap-1.5">
-                    <Maximize className="h-4 w-4" />
-                    {property.area}
+                  <div className="absolute top-3 right-3 bg-background/90 backdrop-blur-sm px-3 py-1 text-xs font-medium rounded-sm">
+                    {typeLabels[property.type] || property.type}
                   </div>
                 </div>
 
-                {/* Price & CTA */}
-                <div className="flex items-center justify-between">
-                  <div className="font-serif text-lg font-semibold text-foreground">
-                    {property.price}
+                {/* Content */}
+                <div className="p-5">
+                  <h3 className="font-serif text-lg font-medium mb-2 line-clamp-1">
+                    {property.title}
+                  </h3>
+                  <div className="flex items-center gap-1.5 text-muted-foreground text-sm mb-4">
+                    <MapPin className="h-4 w-4" />
+                    {property.location}
                   </div>
-                  <Button variant="ghost" size="sm" className="text-accent hover:text-accent/80">
-                    Ver detalles
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
+
+                  {/* Details */}
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4 pb-4 border-b border-border">
+                    {property.beds && (
+                      <div className="flex items-center gap-1.5">
+                        <BedDouble className="h-4 w-4" />
+                        {property.beds}
+                      </div>
+                    )}
+                    {property.baths && (
+                      <div className="flex items-center gap-1.5">
+                        <Bath className="h-4 w-4" />
+                        {property.baths}
+                      </div>
+                    )}
+                    <div className="flex items-center gap-1.5">
+                      <Maximize className="h-4 w-4" />
+                      {property.area}
+                    </div>
+                  </div>
+
+                  {/* Price & CTA */}
+                  <div className="flex items-center justify-between">
+                    <div className="font-serif text-lg font-semibold text-foreground">
+                      {formatPrice(Number(property.price), property.currency)}
+                    </div>
+                    <Button variant="ghost" size="sm" className="text-accent hover:text-accent/80">
+                      Ver detalles
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
         {/* View All Button */}
         <div className="text-center mt-12">
