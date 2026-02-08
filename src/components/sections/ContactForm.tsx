@@ -1,7 +1,99 @@
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { MessageCircle, Phone, Mail, MapPin, Send } from 'lucide-react';
+import { MessageCircle, Phone, Mail, MapPin, Send, Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { z } from 'zod';
+
+const contactSchema = z.object({
+  name: z.string().trim().min(1, 'El nombre es requerido').max(100, 'El nombre es muy largo'),
+  phone: z.string().trim().min(1, 'El teléfono es requerido').max(20, 'El teléfono es muy largo'),
+  email: z.string().trim().email('Email inválido').max(255, 'El email es muy largo').or(z.literal('')),
+  property_type: z.string().min(1, 'Selecciona un tipo de propiedad'),
+  message: z.string().trim().max(1000, 'El mensaje es muy largo').optional(),
+});
+
+type ContactFormData = z.infer<typeof contactSchema>;
 
 const ContactForm = () => {
+  const [formData, setFormData] = useState<ContactFormData>({
+    name: '',
+    phone: '',
+    email: '',
+    property_type: '',
+    message: '',
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<Partial<Record<keyof ContactFormData, string>>>({});
+  const { toast } = useToast();
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    // Clear error when user types
+    if (errors[name as keyof ContactFormData]) {
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrors({});
+
+    // Validate form data
+    const result = contactSchema.safeParse(formData);
+    if (!result.success) {
+      const fieldErrors: Partial<Record<keyof ContactFormData, string>> = {};
+      result.error.errors.forEach((err) => {
+        const field = err.path[0] as keyof ContactFormData;
+        fieldErrors[field] = err.message;
+      });
+      setErrors(fieldErrors);
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const { error } = await supabase.from('leads').insert({
+        name: result.data.name,
+        phone: result.data.phone,
+        email: result.data.email || null,
+        property_type: result.data.property_type,
+        notes: result.data.message || null,
+        status: 'nuevo',
+        source: 'formulario_web',
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: '¡Mensaje enviado!',
+        description: 'Nos pondremos en contacto contigo pronto.',
+      });
+
+      // Reset form
+      setFormData({
+        name: '',
+        phone: '',
+        email: '',
+        property_type: '',
+        message: '',
+      });
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      toast({
+        title: 'Error',
+        description: 'Hubo un problema al enviar tu mensaje. Intenta de nuevo.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <section id="contacto" className="section-padding bg-background">
       <div className="container">
@@ -79,28 +171,44 @@ const ContactForm = () => {
             <h3 className="font-serif text-2xl font-medium mb-6">
               Quiero recibir información
             </h3>
-            <form className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-5">
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
-                  Nombre completo
+                  Nombre completo *
                 </label>
                 <input
                   type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
                   placeholder="Tu nombre"
-                  className="w-full h-12 px-4 bg-background border border-border rounded-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
+                  className={`w-full h-12 px-4 bg-background border rounded-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all ${
+                    errors.name ? 'border-destructive' : 'border-border'
+                  }`}
                 />
+                {errors.name && (
+                  <p className="text-sm text-destructive mt-1">{errors.name}</p>
+                )}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
-                    WhatsApp
+                    WhatsApp *
                   </label>
                   <input
                     type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
                     placeholder="+52 (___) ___ ____"
-                    className="w-full h-12 px-4 bg-background border border-border rounded-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
+                    className={`w-full h-12 px-4 bg-background border rounded-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all ${
+                      errors.phone ? 'border-destructive' : 'border-border'
+                    }`}
                   />
+                  {errors.phone && (
+                    <p className="text-sm text-destructive mt-1">{errors.phone}</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
@@ -108,23 +216,41 @@ const ContactForm = () => {
                   </label>
                   <input
                     type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
                     placeholder="tu@email.com"
-                    className="w-full h-12 px-4 bg-background border border-border rounded-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
+                    className={`w-full h-12 px-4 bg-background border rounded-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all ${
+                      errors.email ? 'border-destructive' : 'border-border'
+                    }`}
                   />
+                  {errors.email && (
+                    <p className="text-sm text-destructive mt-1">{errors.email}</p>
+                  )}
                 </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
-                  Tipo de propiedad de interés
+                  Tipo de propiedad de interés *
                 </label>
-                <select className="w-full h-12 px-4 bg-background border border-border rounded-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all appearance-none cursor-pointer">
+                <select 
+                  name="property_type"
+                  value={formData.property_type}
+                  onChange={handleChange}
+                  className={`w-full h-12 px-4 bg-background border rounded-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all appearance-none cursor-pointer ${
+                    errors.property_type ? 'border-destructive' : 'border-border'
+                  }`}
+                >
                   <option value="">Selecciona una opción</option>
                   <option value="casa">Casa</option>
                   <option value="oficina">Oficina</option>
                   <option value="lote">Lote Residencial</option>
                   <option value="inversion">Terreno de Inversión</option>
                 </select>
+                {errors.property_type && (
+                  <p className="text-sm text-destructive mt-1">{errors.property_type}</p>
+                )}
               </div>
 
               <div>
@@ -132,15 +258,33 @@ const ContactForm = () => {
                   Mensaje (opcional)
                 </label>
                 <textarea
+                  name="message"
+                  value={formData.message}
+                  onChange={handleChange}
                   rows={4}
                   placeholder="Cuéntanos qué estás buscando..."
                   className="w-full px-4 py-3 bg-background border border-border rounded-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all resize-none"
                 />
               </div>
 
-              <Button variant="gold" size="xl" className="w-full">
-                <Send className="h-5 w-5" />
-                Quiero recibir información
+              <Button 
+                type="submit" 
+                variant="gold" 
+                size="xl" 
+                className="w-full"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    Enviando...
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-5 w-5" />
+                    Quiero recibir información
+                  </>
+                )}
               </Button>
 
               <p className="text-xs text-muted-foreground text-center">
