@@ -11,6 +11,9 @@ import AdminAuth from "./pages/AdminAuth";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminProperties from "./pages/admin/AdminProperties";
 import PropertyForm from "./pages/admin/PropertyForm";
+import AdminLeads from "./pages/admin/AdminLeads";
+import LeadDetail from "./pages/admin/LeadDetail";
+import AdminReports from "./pages/admin/AdminReports";
 
 const queryClient = new QueryClient();
 
@@ -53,6 +56,30 @@ const App = () => (
               element={
                 <ProtectedRoute requireAdmin>
                   <PropertyForm />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/leads"
+              element={
+                <ProtectedRoute requireAdmin>
+                  <AdminLeads />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/leads/:id"
+              element={
+                <ProtectedRoute requireAdmin>
+                  <LeadDetail />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/reports"
+              element={
+                <ProtectedRoute requireAdmin>
+                  <AdminReports />
                 </ProtectedRoute>
               }
             />

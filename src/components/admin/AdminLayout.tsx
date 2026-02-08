@@ -8,7 +8,9 @@ import {
   LogOut, 
   Menu, 
   X,
-  ChevronLeft
+  ChevronLeft,
+  Users,
+  BarChart3
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -19,6 +21,8 @@ interface AdminLayoutProps {
 const navItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/properties', label: 'Propiedades', icon: Building2 },
+  { href: '/admin/leads', label: 'Prospectos', icon: Users },
+  { href: '/admin/reports', label: 'Reportes', icon: BarChart3 },
 ];
 
 const AdminLayout = ({ children }: AdminLayoutProps) => {
