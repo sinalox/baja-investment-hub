@@ -21,10 +21,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { 
-  Plus, 
-  Eye, 
-  Trash2, 
+import {
+  Plus,
+  Eye,
+  Trash2,
   Search,
   MessageSquarePlus,
   Phone,
@@ -33,6 +33,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import InteractionModal from '@/components/admin/InteractionModal';
+import NewLeadModal from '@/components/admin/NewLeadModal';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -74,7 +75,8 @@ const AdminLeads = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [isInteractionModalOpen, setIsInteractionModalOpen] = useState(false);
-  
+  const [isNewLeadModalOpen, setIsNewLeadModalOpen] = useState(false);
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -162,6 +164,10 @@ const AdminLeads = () => {
               Gestión de leads y seguimiento de clientes potenciales
             </p>
           </div>
+          <Button onClick={() => setIsNewLeadModalOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Nuevo Prospecto
+          </Button>
         </div>
 
         {/* Filters */}
@@ -307,6 +313,11 @@ const AdminLeads = () => {
         open={isInteractionModalOpen}
         onOpenChange={setIsInteractionModalOpen}
         leadId={selectedLeadId}
+      />
+
+      <NewLeadModal
+        open={isNewLeadModalOpen}
+        onOpenChange={setIsNewLeadModalOpen}
       />
     </AdminLayout>
   );
