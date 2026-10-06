@@ -14,6 +14,7 @@ import PropertyForm from "./pages/admin/PropertyForm";
 import AdminLeads from "./pages/admin/AdminLeads";
 import LeadDetail from "./pages/admin/LeadDetail";
 import AdminReports from "./pages/admin/AdminReports";
+import PropertyDetail from "./pages/PropertyDetail";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +27,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/properties/:id" element={<PropertyDetail />} />
             <Route path="/admin/login" element={<AdminAuth />} />
             <Route
               path="/admin"

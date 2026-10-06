@@ -32,14 +32,15 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
           {/* Brand */}
           <div className="lg:col-span-1">
-            <div className="font-serif text-2xl font-semibold tracking-tight mb-4">
-              <span className="block leading-tight">HEREDIA</span>
-              <span className="block text-sm font-sans font-normal tracking-[0.25em] opacity-70">
-                LAND BAJA
-              </span>
+            <div className="mb-4">
+              <img
+                src="/2.webp"
+                alt="Heredia Land Baja"
+                className="h-16 w-auto object-contain"
+              />
             </div>
             <p className="text-primary-foreground/70 text-sm leading-relaxed mb-6">
-              Tu socio de confianza para inversiones inmobiliarias en Baja California. 
+              Tu socio de confianza para inversiones inmobiliarias en Baja California.
               Más de 15 años construyendo patrimonios.
             </p>
             {/* Social Links */}

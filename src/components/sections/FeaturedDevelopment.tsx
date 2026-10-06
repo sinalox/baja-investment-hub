@@ -28,7 +28,7 @@ const FeaturedDevelopment = () => {
             <span className="text-accent text-sm font-semibold tracking-widest uppercase mb-4 block">
               Proyecto Destacado
             </span>
-            <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl font-medium leading-tight mb-6">
+            <h2 className="font-sans text-3xl md:text-4xl lg:text-5xl font-medium leading-tight mb-6">
               Costa Pacífico
               <br />
               <span className="text-accent">Residencial</span>
@@ -53,7 +53,7 @@ const FeaturedDevelopment = () => {
             {/* Price */}
             <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 mb-8 max-w-sm">
               <div className="text-sm text-white/70 mb-1">Lotes desde</div>
-              <div className="font-serif text-3xl font-semibold mb-2">$1,200,000 MXN</div>
+              <div className="font-sans text-3xl font-semibold mb-2">$1,200,000 MXN</div>
               <div className="text-sm text-white/70">
                 o desde <span className="text-accent font-semibold">$25,000 MXN/mes</span>
               </div>

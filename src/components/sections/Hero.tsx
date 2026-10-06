@@ -25,7 +25,7 @@ const Hero = () => {
           </div>
 
           {/* Headline */}
-          <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-medium leading-tight mb-6 animate-fade-in-up">
+          <h1 className="font-sans text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-medium leading-tight mb-6 animate-fade-in-up">
             Invierte con certeza
             <br />
             <span className="text-accent">en Baja California</span>
@@ -50,15 +50,15 @@ const Hero = () => {
           {/* Stats */}
           <div className="grid grid-cols-3 gap-8 max-w-xl mx-auto mt-16 pt-16 border-t border-white/20 animate-fade-in opacity-0 delay-500">
             <div>
-              <div className="font-serif text-3xl md:text-4xl font-medium mb-1">15+</div>
+              <div className="font-sans text-3xl md:text-4xl font-medium mb-1">15+</div>
               <div className="text-sm text-white/70">Años de experiencia</div>
             </div>
             <div>
-              <div className="font-serif text-3xl md:text-4xl font-medium mb-1">200+</div>
+              <div className="font-sans text-3xl md:text-4xl font-medium mb-1">200+</div>
               <div className="text-sm text-white/70">Propiedades vendidas</div>
             </div>
             <div>
-              <div className="font-serif text-3xl md:text-4xl font-medium mb-1">12%</div>
+              <div className="font-sans text-3xl md:text-4xl font-medium mb-1">12%</div>
               <div className="text-sm text-white/70">Plusvalía anual</div>
             </div>
           </div>

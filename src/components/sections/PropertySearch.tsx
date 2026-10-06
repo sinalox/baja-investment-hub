@@ -1,15 +1,48 @@
+import { useState } from 'react';
 import { Search, MapPin, Home, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-const PropertySearch = () => {
+interface SearchFilters {
+  propertyType: string;
+  location: string;
+  priceRange: string;
+}
+
+interface PropertySearchProps {
+  onSearch?: (filters: SearchFilters) => void;
+}
+
+const PropertySearch = ({ onSearch }: PropertySearchProps) => {
+  const [filters, setFilters] = useState<SearchFilters>({
+    propertyType: '',
+    location: '',
+    priceRange: '',
+  });
+
+  const handleChange = (field: keyof SearchFilters, value: string) => {
+    const newFilters = { ...filters, [field]: value };
+    setFilters(newFilters);
+    // Auto-search on change for real-time filtering
+    onSearch?.(newFilters);
+  };
+
+  const handleSearch = () => {
+    onSearch?.(filters);
+    // Scroll to properties section
+    const propertiesSection = document.getElementById('propiedades');
+    if (propertiesSection) {
+      propertiesSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <section className="relative -mt-16 z-20 pb-12">
       <div className="container">
         <div className="bg-background rounded-lg shadow-lg border border-border p-6 md:p-8">
-          <h2 className="font-serif text-xl md:text-2xl font-medium text-center mb-6">
+          <h2 className="font-sans text-xl md:text-2xl font-medium text-center mb-6">
             Encuentra tu propiedad ideal
           </h2>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Property Type */}
             <div className="relative">
@@ -18,7 +51,11 @@ const PropertySearch = () => {
               </label>
               <div className="relative">
                 <Home className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <select className="w-full h-12 pl-10 pr-4 bg-secondary border-0 rounded-sm text-foreground focus:ring-2 focus:ring-accent appearance-none cursor-pointer">
+                <select
+                  value={filters.propertyType}
+                  onChange={(e) => handleChange('propertyType', e.target.value)}
+                  className="w-full h-12 pl-10 pr-4 bg-secondary border-0 rounded-sm text-foreground focus:ring-2 focus:ring-accent appearance-none cursor-pointer"
+                >
                   <option value="">Todos</option>
                   <option value="casa">Casa</option>
                   <option value="oficina">Oficina</option>
@@ -35,7 +72,11 @@ const PropertySearch = () => {
               </label>
               <div className="relative">
                 <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <select className="w-full h-12 pl-10 pr-4 bg-secondary border-0 rounded-sm text-foreground focus:ring-2 focus:ring-accent appearance-none cursor-pointer">
+                <select
+                  value={filters.location}
+                  onChange={(e) => handleChange('location', e.target.value)}
+                  className="w-full h-12 pl-10 pr-4 bg-secondary border-0 rounded-sm text-foreground focus:ring-2 focus:ring-accent appearance-none cursor-pointer"
+                >
                   <option value="">Todas las ubicaciones</option>
                   <option value="ensenada">Ensenada</option>
                   <option value="rosarito">Rosarito</option>
@@ -53,7 +94,11 @@ const PropertySearch = () => {
               </label>
               <div className="relative">
                 <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <select className="w-full h-12 pl-10 pr-4 bg-secondary border-0 rounded-sm text-foreground focus:ring-2 focus:ring-accent appearance-none cursor-pointer">
+                <select
+                  value={filters.priceRange}
+                  onChange={(e) => handleChange('priceRange', e.target.value)}
+                  className="w-full h-12 pl-10 pr-4 bg-secondary border-0 rounded-sm text-foreground focus:ring-2 focus:ring-accent appearance-none cursor-pointer"
+                >
                   <option value="">Cualquier precio</option>
                   <option value="0-500000">Hasta $500,000 MXN</option>
                   <option value="500000-1000000">$500,000 - $1,000,000 MXN</option>
@@ -66,7 +111,12 @@ const PropertySearch = () => {
 
             {/* Search Button */}
             <div className="flex items-end">
-              <Button variant="gold" size="lg" className="w-full h-12">
+              <Button
+                variant="gold"
+                size="lg"
+                className="w-full h-12"
+                onClick={handleSearch}
+              >
                 <Search className="h-5 w-5" />
                 Buscar
               </Button>

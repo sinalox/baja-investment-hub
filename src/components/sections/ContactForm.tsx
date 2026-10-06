@@ -168,7 +168,7 @@ const ContactForm = () => {
 
           {/* Right - Form */}
           <div className="bg-secondary/50 rounded-xl p-8 lg:p-10">
-            <h3 className="font-serif text-2xl font-medium mb-6">
+            <h3 className="font-sans text-2xl font-medium mb-6">
               Quiero recibir información
             </h3>
             <form onSubmit={handleSubmit} className="space-y-5">

@@ -36,7 +36,7 @@ const HowItWorks = () => {
           <span className="text-accent text-sm font-semibold tracking-widest uppercase mb-4 block">
             Proceso simple
           </span>
-          <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl font-medium mb-4">
+          <h2 className="font-sans text-3xl md:text-4xl lg:text-5xl font-medium mb-4">
             ¿Cómo funciona?
           </h2>
           <p className="text-lg text-primary-foreground/70 max-w-2xl mx-auto">
@@ -64,7 +64,7 @@ const HowItWorks = () => {
                   </span>
                 </div>
                 
-                <h3 className="font-serif text-xl font-medium mb-3">{step.title}</h3>
+                <h3 className="font-sans text-xl font-medium mb-3">{step.title}</h3>
                 <p className="text-primary-foreground/70 leading-relaxed">{step.description}</p>
               </div>
             </div>

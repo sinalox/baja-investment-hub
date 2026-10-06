@@ -122,7 +122,7 @@ const AdminReports = () => {
     <AdminLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-serif font-semibold">Reportes</h1>
+          <h1 className="text-2xl font-sans font-semibold">Reportes</h1>
           <p className="text-muted-foreground">
             Análisis y métricas del CRM inmobiliario
           </p>

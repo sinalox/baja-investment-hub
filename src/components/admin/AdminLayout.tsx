@@ -56,7 +56,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="h-16 flex items-center justify-between px-4 border-b">
-            <Link to="/admin" className="font-serif text-xl font-semibold">
+            <Link to="/admin" className="font-sans text-xl font-semibold">
               Heredia Land
             </Link>
             <Button

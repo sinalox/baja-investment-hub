@@ -53,7 +53,7 @@ const WhyInvest = () => {
               <div className="w-14 h-14 rounded-lg bg-accent/10 flex items-center justify-center mb-6 group-hover:bg-accent/20 transition-colors">
                 <benefit.icon className="h-7 w-7 text-accent" />
               </div>
-              <h3 className="font-serif text-xl font-medium mb-3">{benefit.title}</h3>
+              <h3 className="font-sans text-xl font-medium mb-3">{benefit.title}</h3>
               <p className="text-muted-foreground leading-relaxed">{benefit.description}</p>
             </div>
           ))}

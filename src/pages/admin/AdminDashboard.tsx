@@ -6,12 +6,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from 'recharts';
-import { 
-  Building2, 
-  Home, 
-  Landmark, 
-  TrendingUp, 
-  Plus, 
+import {
+  Building2,
+  Home,
+  Landmark,
+  TrendingUp,
+  Plus,
   Users,
   Target,
   DollarSign,
@@ -95,12 +95,17 @@ const AdminDashboard = () => {
     .filter(l => !['ganado', 'perdido'].includes(l.status) && l.budget_max)
     .reduce((sum, l) => sum + (l.budget_max || 0), 0);
 
+  // Calculate leads today
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const leadsToday = leads.filter(l => new Date(l.created_at) >= today).length;
+
   // Monthly leads data (last 6 months)
   const monthlyData = Array.from({ length: 6 }, (_, i) => {
     const date = subMonths(new Date(), 5 - i);
     const start = startOfMonth(date);
     const end = endOfMonth(date);
-    
+
     const count = leads.filter(l => {
       const createdAt = new Date(l.created_at);
       return createdAt >= start && createdAt <= end;
@@ -143,7 +148,7 @@ const AdminDashboard = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-serif font-semibold">Dashboard</h1>
+            <h1 className="text-2xl font-sans font-semibold">Dashboard</h1>
             <p className="text-muted-foreground">
               Resumen general del CRM inmobiliario
             </p>
@@ -159,7 +164,22 @@ const AdminDashboard = () => {
         {/* Lead KPIs */}
         <div>
           <h2 className="text-lg font-medium mb-4">Métricas de Ventas</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <Card className="border-accent/50 bg-accent/5">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Leads Nuevos Hoy
+                </CardTitle>
+                <Users className="h-4 w-4 text-accent" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-accent">{leadsToday}</div>
+                <p className="text-xs text-muted-foreground">
+                  prospectos hoy
+                </p>
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -245,9 +265,9 @@ const AdminDashboard = () => {
                   <XAxis dataKey="month" />
                   <YAxis allowDecimals={false} />
                   <ChartTooltip content={<ChartTooltipContent />} />
-                  <Bar 
-                    dataKey="leads" 
-                    fill="hsl(var(--accent))" 
+                  <Bar
+                    dataKey="leads"
+                    fill="hsl(var(--accent))"
                     radius={[4, 4, 0, 0]}
                   />
                 </BarChart>

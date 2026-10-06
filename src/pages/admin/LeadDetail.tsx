@@ -262,7 +262,7 @@ const LeadDetail = () => {
             </Link>
           </Button>
           <div className="flex-1">
-            <h1 className="text-2xl font-serif font-semibold">{lead.name}</h1>
+            <h1 className="text-2xl font-sans font-semibold">{lead.name}</h1>
             <p className="text-muted-foreground">Detalle del prospecto</p>
           </div>
           <Button onClick={() => setIsInteractionModalOpen(true)}>

@@ -33,23 +33,19 @@ const Header = () => {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        isScrolled
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${isScrolled
           ? 'bg-background/95 backdrop-blur-md shadow-sm py-3'
           : 'bg-transparent py-5'
-      }`}
+        }`}
     >
       <div className="container mx-auto flex items-center justify-between">
         {/* Logo */}
         <a href="#" className="flex items-center gap-3">
-          <div className={`font-serif text-xl md:text-2xl font-semibold tracking-tight transition-colors duration-300 ${
-            isScrolled ? 'text-foreground' : 'text-white'
-          }`}>
-            <span className="block leading-tight">HEREDIA</span>
-            <span className="block text-xs md:text-sm font-sans font-normal tracking-[0.25em] opacity-80">
-              LAND BAJA
-            </span>
-          </div>
+          <img
+            src={isScrolled ? "/1.webp" : "/2.webp"}
+            alt="Heredia Land Baja"
+            className="h-12 md:h-16 w-auto object-contain transition-all duration-300"
+          />
         </a>
 
         {/* Desktop Navigation */}
@@ -58,11 +54,10 @@ const Header = () => {
             <div key={item.label} className="nav-item relative group">
               <a
                 href={item.href}
-                className={`flex items-center gap-1 text-sm font-medium transition-colors duration-300 link-underline ${
-                  isScrolled
+                className={`flex items-center gap-1 text-sm font-medium transition-colors duration-300 link-underline ${isScrolled
                     ? 'text-foreground hover:text-accent'
                     : 'text-white/90 hover:text-white'
-                }`}
+                  }`}
               >
                 {item.label}
                 {item.dropdown && <ChevronDown className="h-4 w-4 transition-transform group-hover:rotate-180" />}
@@ -95,9 +90,8 @@ const Header = () => {
 
         {/* Mobile Menu Button */}
         <button
-          className={`lg:hidden p-2 transition-colors ${
-            isScrolled ? 'text-foreground' : 'text-white'
-          }`}
+          className={`lg:hidden p-2 transition-colors ${isScrolled ? 'text-foreground' : 'text-white'
+            }`}
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         >
           {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -106,9 +100,8 @@ const Header = () => {
 
       {/* Mobile Menu */}
       <div
-        className={`lg:hidden absolute top-full left-0 right-0 bg-background shadow-lg transition-all duration-300 ${
-          isMobileMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
-        }`}
+        className={`lg:hidden absolute top-full left-0 right-0 bg-background shadow-lg transition-all duration-300 ${isMobileMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
+          }`}
       >
         <nav className="container py-6 flex flex-col gap-4">
           {navItems.map((item) => (

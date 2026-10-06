@@ -93,7 +93,7 @@ const AdminAuth = () => {
           <div className="mx-auto mb-4 w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
             <ShieldCheck className="h-6 w-6 text-primary" />
           </div>
-          <CardTitle className="font-serif text-2xl">Panel de Administración</CardTitle>
+          <CardTitle className="font-sans text-2xl">Panel de Administración</CardTitle>
           <CardDescription>
             Ingresa tus credenciales para acceder al dashboard
           </CardDescription>
