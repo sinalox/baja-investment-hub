@@ -45,5 +45,5 @@ INSERT INTO public.user_roles (user_id, role) VALUES ('<uuid-del-usuario>', 'adm
 
 ## Despliegue
 
-Es una SPA estática; `public/_redirects` redirige todas las rutas a `index.html`.
+Es una SPA estática. Hosting principal: **Cloudflare Workers** ([wrangler.jsonc](wrangler.jsonc), con `not_found_handling: single-page-application`). También funciona en Netlify ([netlify.toml](netlify.toml)).
 Las variables `VITE_SUPABASE_*` deben configurarse en el proveedor de hosting, porque `.env` no se sube al repositorio.

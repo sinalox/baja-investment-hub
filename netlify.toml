@@ -1,0 +1,11 @@
+# Netlify: SPA, todas las rutas sirven index.html.
+# Va aquí y no en public/_redirects porque Cloudflare rechaza esa regla
+# (en Cloudflare lo resuelve "not_found_handling" de wrangler.jsonc).
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

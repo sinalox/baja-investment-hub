@@ -38,7 +38,7 @@ El proyecto se generó inicialmente con **Lovable** (plantilla `vite_react_shadc
 | Notificaciones | `useToast` (shadcn) y sonner |
 | Testing | Vitest + Testing Library + jsdom |
 | Analítica | Google Analytics (gtag `G-3H9F6Y8FX9` en `index.html`) |
-| Despliegue | SPA estática; `public/_redirects` (`/* /index.html 200`) para Netlify o similar |
+| Despliegue | SPA estática en Cloudflare Workers (`wrangler.jsonc`); compatible con Netlify (`netlify.toml`) |
 
 ---
 
@@ -47,7 +47,7 @@ El proyecto se generó inicialmente con **Lovable** (plantilla `vite_react_shadc
 ```text
 baja-investment-hub/
 ├── index.html                 # HTML base, meta tags, Google Analytics
-├── public/                    # Logos (1.webp / 2.webp), og-image.jpg, favicons, _redirects, robots.txt
+├── public/                    # Logos (1.webp / 2.webp), og-image.jpg, favicons, robots.txt
 ├── supabase/
 │   ├── config.toml            # project_id de Supabase
 │   └── migrations/            # Esquema SQL (properties, user_roles, leads, interactions)
