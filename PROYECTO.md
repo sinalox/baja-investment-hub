@@ -1,6 +1,6 @@
 # Baja Investment Hub — Documentación del Proyecto
 
-Sitio web inmobiliario de **Heredia Land Baja** (Ensenada, Baja California, México) con un **CRM interno** para administrar propiedades y prospectos (leads).
+Sitio web inmobiliario de **Heredia Land Baja** (Tijuana, Baja California, México) con un **CRM interno** para administrar propiedades y prospectos (leads).
 
 El proyecto se generó inicialmente con **Lovable** (plantilla `vite_react_shadcn_ts`) y después se ha seguido editando a mano.
 
@@ -305,7 +305,6 @@ Se aplican con la Supabase CLI (`supabase db push`) o desde el panel de Lovable/
 ### Pendiente (requiere información o acción externa)
 - **Aplicar la migración** `20261022120000_admin_properties_select_and_public_leads_hardening.sql` en Supabase.
 - **Variables de entorno en el hosting**: como `.env` ya no está en git, hay que definir `VITE_SUPABASE_*` en el proveedor de despliegue.
-- **Datos reales de contacto y redes** en `src/config/site.ts` (el teléfono `+52 646 123 4567` parece de ejemplo).
 - **Revisión legal** del aviso de privacidad y, si se necesita, una página de términos y condiciones (el enlace se quitó porque no había contenido).
 - **URL absoluta para `og:image`** cuando haya dominio definitivo (Facebook y WhatsApp prefieren URLs absolutas).
 - Para un antispam más fuerte: captcha (Cloudflare Turnstile o hCaptcha) o rate limiting con una Edge Function.

@@ -149,7 +149,7 @@ const NewLeadModal = ({ open, onOpenChange }: NewLeadModalProps) => {
                                 id="phone"
                                 value={formData.phone}
                                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                placeholder="Ej: 646-123-4567"
+                                placeholder="Ej: 664-123-4567"
                                 required
                             />
                         </div>
