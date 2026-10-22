@@ -1,0 +1,12 @@
+// Despliegue en Cloudflare Workers como sitio estático (sin código de servidor).
+// Con este archivo Cloudflare no intenta autoconfigurar Vite (requiere Vite 6+).
+{
+  // Debe coincidir con el nombre del Worker en el dashboard de Cloudflare
+  "name": "baja-investment-hub",
+  "compatibility_date": "2025-10-01",
+  "assets": {
+    "directory": "./dist",
+    // SPA: cualquier ruta desconocida (/properties/..., /admin) sirve index.html
+    "not_found_handling": "single-page-application"
+  }
+}
