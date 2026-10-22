@@ -133,13 +133,23 @@ const Properties = ({ filters }: PropertiesProps) => {
                 className="property-card bg-background rounded-lg overflow-hidden group"
               >
                 {/* Image */}
-                <div className="relative aspect-[4/3] overflow-hidden">
+                <div className="relative aspect-[4/3] overflow-hidden bg-secondary">
+                  {/* Fondo desenfocado + foto completa: sin recortes aunque la
+                      portada sea vertical o cuadrada */}
+                  <img
+                    src={getPropertyImage(property, index)}
+                    alt=""
+                    aria-hidden="true"
+                    loading={index < 2 ? 'eager' : 'lazy'}
+                    decoding="async"
+                    className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl opacity-60"
+                  />
                   <img
                     src={getPropertyImage(property, index)}
                     alt={property.title}
                     loading={index < 2 ? 'eager' : 'lazy'}
                     decoding="async"
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    className="relative w-full h-full object-contain transition-transform duration-700 group-hover:scale-105"
                   />
                   {property.featured && (
                     <div className="absolute top-3 left-3 bg-accent text-accent-foreground px-3 py-1 text-xs font-semibold rounded-sm">

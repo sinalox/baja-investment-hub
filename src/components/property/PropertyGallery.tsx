@@ -83,11 +83,22 @@ const PropertyGallery = ({ images, title, children }: PropertyGalleryProps) => {
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
+        {/* Fondo desenfocado de la misma foto: rellena el espacio cuando la
+            proporción de la foto no coincide con la del recuadro */}
+        <img
+          key={`bg-${images[current]}`}
+          src={images[current]}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl opacity-60"
+          draggable={false}
+        />
+        {/* La foto completa, sin recortes */}
         <img
           key={images[current]}
           src={images[current]}
           alt={hasMultiple ? `${title} - imagen ${current + 1} de ${images.length}` : title}
-          className="w-full h-full object-cover animate-fade-in"
+          className="relative w-full h-full object-contain animate-fade-in"
           draggable={false}
         />
 
