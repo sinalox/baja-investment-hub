@@ -31,7 +31,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
 import { siteConfig, phoneUrl, whatsappUrl } from '@/config/site';
-import { formatPrice } from '@/lib/properties';
+import { formatPrice, getPropertyImages } from '@/lib/properties';
+import PropertyGallery from '@/components/property/PropertyGallery';
 import {
     HONEYPOT_FIELD,
     getFieldErrors,
@@ -173,7 +174,8 @@ const PropertyDetail = () => {
         );
     }
 
-    const propertyImage = property.image_url || property1;
+    const galleryImages = getPropertyImages(property);
+    const propertyImages = galleryImages.length > 0 ? galleryImages : [property1];
 
     return (
         <div className="min-h-screen">
@@ -209,13 +211,12 @@ const PropertyDetail = () => {
                     <div className="grid lg:grid-cols-3 gap-8 lg:gap-12">
                         {/* Left - Image & Details */}
                         <div className="lg:col-span-2 space-y-6">
-                            {/* Main Image */}
-                            <div className="relative aspect-[16/10] rounded-lg overflow-hidden">
-                                <img
-                                    src={propertyImage}
-                                    alt={property.title}
-                                    className="w-full h-full object-cover"
-                                />
+                            {/* Gallery */}
+                            <PropertyGallery
+                                key={property.id}
+                                images={propertyImages}
+                                title={property.title}
+                            >
                                 {property.featured && (
                                     <div className="absolute top-4 left-4 bg-accent text-accent-foreground px-4 py-2 text-sm font-semibold rounded-sm">
                                         Propiedad Destacada
@@ -232,7 +233,7 @@ const PropertyDetail = () => {
                                         <Share2 className="h-5 w-5" />
                                     </Button>
                                 </div>
-                            </div>
+                            </PropertyGallery>
 
                             {/* Property Info */}
                             <div>

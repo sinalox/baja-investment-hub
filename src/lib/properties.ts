@@ -79,3 +79,20 @@ export const formatPrice = (price: number, currency: string) =>
     currency,
     minimumFractionDigits: 0,
   }).format(price);
+
+// Galería de la propiedad. Las propiedades anteriores a la galería solo
+// tienen image_url, así que se usa como única imagen.
+export const getPropertyImages = (property: Pick<Property, 'image_url'> & { images?: string[] | null }) => {
+  const images = (property.images ?? []).filter(Boolean);
+  if (images.length > 0) return images;
+  return property.image_url ? [property.image_url] : [];
+};
+
+// Mueve el elemento de `from` a `to` sin mutar el arreglo original
+export const moveItem = <T>(items: T[], from: number, to: number): T[] => {
+  if (to < 0 || to >= items.length || from === to) return items;
+  const result = [...items];
+  const [item] = result.splice(from, 1);
+  result.splice(to, 0, item);
+  return result;
+};

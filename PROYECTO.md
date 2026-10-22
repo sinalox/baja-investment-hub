@@ -11,11 +11,11 @@ El proyecto se generó inicialmente con **Lovable** (plantilla `vite_react_shadc
 | Área | Qué hace |
 |------|----------|
 | **Landing pública** (`/`) | Hero, buscador de propiedades, catálogo filtrable, desarrollo destacado, razones para invertir, cómo funciona, testimonios y formulario de contacto. |
-| **Detalle de propiedad** (`/properties/:id`) | Ficha de una propiedad con modal "Me interesa" que crea un lead y botón para compartir. |
+| **Detalle de propiedad** (`/properties/:id`) | Ficha de una propiedad con galería (imagen grande + miniaturas), modal "Me interesa" que crea un lead y botón para compartir. |
 | **Aviso de privacidad** (`/privacidad`) | Texto base del aviso de privacidad (pendiente de revisión legal). |
 | **Login admin** (`/admin/login`) | Inicio de sesión con email y contraseña (Supabase Auth). |
 | **Dashboard** (`/admin`) | KPIs de propiedades y leads, gráfica de leads por mes (últimos 6) y distribución por estado. |
-| **Propiedades** (`/admin/properties`) | Listado, alta, edición y borrado; subida de imagen a Supabase Storage. |
+| **Propiedades** (`/admin/properties`) | Listado, alta, edición y borrado; galería de hasta 20 imágenes con portada y orden, en Supabase Storage. |
 | **Prospectos** (`/admin/leads`) | Tabla de leads con filtros por estado y tipo, alta manual, borrado y registro de interacciones. |
 | **Detalle de lead** (`/admin/leads/:id`) | Datos del lead, edición de estado y notas, historial de interacciones y propiedades sugeridas según tipo y presupuesto. |
 | **Reportes** (`/admin/reports`) | Resumen y gráficas de leads. |
@@ -118,7 +118,8 @@ Definidas en [src/App.tsx](src/App.tsx). Las rutas `/admin/*` (salvo el login) v
 | location | text | requerido |
 | price | decimal(15,2) | requerido |
 | currency | text | por defecto `MXN` |
-| image_url | text | URL pública del bucket |
+| image_url | text | URL de la portada (= `images[1]`) |
+| images | text[] | Galería de imágenes (máx. 20); la primera es la portada |
 | beds, baths | integer | opcionales |
 | area | text | requerido (texto libre, p. ej. "250 m²") |
 | description | text | |

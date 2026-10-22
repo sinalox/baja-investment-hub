@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { filterProperties, parsePriceRange, formatPrice, emptyFilters } from './properties';
+import { filterProperties, parsePriceRange, formatPrice, emptyFilters, getPropertyImages, moveItem } from './properties';
 
 const properties = [
   { id: '1', type: 'casa', location: 'Ensenada, B.C.', price: 1500000 },
@@ -52,5 +52,32 @@ describe('filterProperties', () => {
 describe('formatPrice', () => {
   it('formats MXN without decimals', () => {
     expect(formatPrice(1500000, 'MXN')).toBe('$1,500,000');
+  });
+});
+
+describe('getPropertyImages', () => {
+  it('uses the gallery when present', () => {
+    expect(getPropertyImages({ image_url: 'a.jpg', images: ['a.jpg', 'b.jpg'] })).toEqual(['a.jpg', 'b.jpg']);
+  });
+
+  it('falls back to image_url for older properties', () => {
+    expect(getPropertyImages({ image_url: 'a.jpg', images: [] })).toEqual(['a.jpg']);
+    expect(getPropertyImages({ image_url: 'a.jpg' })).toEqual(['a.jpg']);
+  });
+
+  it('returns an empty list when there are no images', () => {
+    expect(getPropertyImages({ image_url: null, images: [] })).toEqual([]);
+  });
+});
+
+describe('moveItem', () => {
+  it('moves an item to the front', () => {
+    expect(moveItem(['a', 'b', 'c'], 2, 0)).toEqual(['c', 'a', 'b']);
+  });
+
+  it('ignores out of range moves', () => {
+    const items = ['a', 'b'];
+    expect(moveItem(items, 0, -1)).toBe(items);
+    expect(moveItem(items, 1, 2)).toBe(items);
   });
 });

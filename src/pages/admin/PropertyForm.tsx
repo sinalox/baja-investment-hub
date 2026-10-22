@@ -15,10 +15,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Loader2, Upload, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2, Star, Upload, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
+import { getPropertyImages, moveItem } from '@/lib/properties';
 
 type PropertyInsert = Database['public']['Tables']['properties']['Insert'];
 type PropertyUpdate = Database['public']['Tables']['properties']['Update'];
@@ -36,6 +37,9 @@ const statuses = [
   { value: 'sold', label: 'Vendido' },
 ];
 
+const MAX_IMAGES = 20;
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+
 const PropertyForm = () => {
   const { id } = useParams();
   const isEditing = !!id;
@@ -45,7 +49,8 @@ const PropertyForm = () => {
 
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  // La primera imagen es la portada (se guarda también en image_url)
+  const [images, setImages] = useState<string[]>([]);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -60,7 +65,6 @@ const PropertyForm = () => {
     description: '',
     featured: false,
     status: 'active',
-    image_url: '',
   });
 
   const { data: property, isLoading: loading, isError } = useQuery({
@@ -103,66 +107,84 @@ const PropertyForm = () => {
       description: property.description || '',
       featured: property.featured,
       status: property.status,
-      image_url: property.image_url || '',
     });
-    setImagePreview(property.image_url || null);
+    setImages(getPropertyImages(property));
   }, [property]);
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      toast({
-        title: 'Error',
-        description: 'Solo se permiten archivos de imagen',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast({
-        title: 'Error',
-        description: 'La imagen no debe exceder 5MB',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setUploading(true);
-
+  const uploadImage = async (file: File) => {
     const fileExt = file.name.split('.').pop();
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
-    const { error: uploadError } = await supabase.storage
+    const { error } = await supabase.storage
       .from('property-images')
       .upload(fileName, file);
-
-    if (uploadError) {
-      toast({
-        title: 'Error',
-        description: 'No se pudo subir la imagen',
-        variant: 'destructive',
-      });
-      setUploading(false);
-      return;
-    }
+    if (error) throw error;
 
     const { data: { publicUrl } } = supabase.storage
       .from('property-images')
       .getPublicUrl(fileName);
+    return publicUrl;
+  };
 
-    setFormData({ ...formData, image_url: publicUrl });
-    setImagePreview(publicUrl);
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = Array.from(e.target.files ?? []);
+    // Permite volver a elegir los mismos archivos
+    e.target.value = '';
+    if (selected.length === 0) return;
+
+    const valid = selected.filter(
+      (file) => file.type.startsWith('image/') && file.size <= MAX_IMAGE_SIZE,
+    );
+    const rejected = selected.length - valid.length;
+    if (rejected > 0) {
+      toast({
+        title: 'Algunas imágenes no se subieron',
+        description: `${rejected} archivo(s) no son imágenes o pesan más de 5MB`,
+        variant: 'destructive',
+      });
+    }
+
+    const available = MAX_IMAGES - images.length;
+    const toUpload = valid.slice(0, available);
+    if (valid.length > available) {
+      toast({
+        title: 'Límite de imágenes',
+        description: `Cada propiedad puede tener hasta ${MAX_IMAGES} imágenes`,
+        variant: 'destructive',
+      });
+    }
+    if (toUpload.length === 0) return;
+
+    setUploading(true);
+
+    const results = await Promise.allSettled(toUpload.map(uploadImage));
+    const uploaded = results
+      .filter((r): r is PromiseFulfilledResult<string> => r.status === 'fulfilled')
+      .map((r) => r.value);
+    const failed = results.length - uploaded.length;
+
+    if (failed > 0) {
+      toast({
+        title: 'Error',
+        description: `No se pudieron subir ${failed} imagen(es)`,
+        variant: 'destructive',
+      });
+    }
+
+    setImages((prev) => [...prev, ...uploaded]);
     setUploading(false);
   };
 
-  const removeImage = () => {
-    setFormData({ ...formData, image_url: '' });
-    setImagePreview(null);
+  const removeImage = (index: number) => {
+    setImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const makeCover = (index: number) => {
+    setImages((prev) => moveItem(prev, index, 0));
+  };
+
+  const moveImage = (index: number, direction: -1 | 1) => {
+    setImages((prev) => moveItem(prev, index, index + direction));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -182,7 +204,8 @@ const PropertyForm = () => {
       description: formData.description || null,
       featured: formData.featured,
       status: formData.status,
-      image_url: formData.image_url || null,
+      image_url: images[0] ?? null,
+      images,
     };
 
     let error;
@@ -410,31 +433,89 @@ const PropertyForm = () => {
 
           <Card>
             <CardHeader>
-              <CardTitle>Imagen</CardTitle>
+              <CardTitle>Imágenes</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                La primera imagen es la portada del catálogo. Usa la estrella para cambiarla
+                y las flechas para ordenar la galería.
+              </p>
             </CardHeader>
-            <CardContent>
-              {imagePreview ? (
-                <div className="relative w-full max-w-md">
-                  <img
-                    src={imagePreview}
-                    alt="Preview"
-                    className="w-full h-48 object-cover rounded-lg"
-                  />
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="icon"
-                    className="absolute top-2 right-2"
-                    onClick={removeImage}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
+            <CardContent className="space-y-4">
+              {images.length > 0 && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                  {images.map((image, index) => (
+                    <div
+                      key={image}
+                      className={`relative group rounded-lg overflow-hidden border-2 ${
+                        index === 0 ? 'border-accent' : 'border-transparent'
+                      }`}
+                    >
+                      <img
+                        src={image}
+                        alt={`Imagen ${index + 1}`}
+                        className="w-full aspect-[4/3] object-cover"
+                      />
+                      {index === 0 && (
+                        <span className="absolute top-2 left-2 bg-accent text-accent-foreground text-xs font-semibold px-2 py-0.5 rounded-sm">
+                          Portada
+                        </span>
+                      )}
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-2 right-2 h-7 w-7"
+                        onClick={() => removeImage(index)}
+                        aria-label={`Quitar imagen ${index + 1}`}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                      <div className="absolute bottom-0 inset-x-0 flex items-center justify-between gap-1 p-1.5 bg-gradient-to-t from-black/60 to-transparent">
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={() => moveImage(index, -1)}
+                          disabled={index === 0}
+                          aria-label="Mover a la izquierda"
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        {index !== 0 && (
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            className="h-7 px-2 text-xs"
+                            onClick={() => makeCover(index)}
+                          >
+                            <Star className="h-3.5 w-3.5 mr-1" />
+                            Portada
+                          </Button>
+                        )}
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={() => moveImage(index, 1)}
+                          disabled={index === images.length - 1}
+                          aria-label="Mover a la derecha"
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ) : (
+              )}
+
+              {images.length < MAX_IMAGES && (
                 <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
                   <input
                     type="file"
                     accept="image/*"
+                    multiple
                     onChange={handleImageUpload}
                     className="hidden"
                     id="image-upload"
@@ -450,10 +531,14 @@ const PropertyForm = () => {
                       <Upload className="h-8 w-8 text-muted-foreground" />
                     )}
                     <span className="text-sm text-muted-foreground">
-                      {uploading ? 'Subiendo...' : 'Haz clic para subir una imagen'}
+                      {uploading
+                        ? 'Subiendo...'
+                        : images.length === 0
+                          ? 'Haz clic para subir imágenes'
+                          : 'Agregar más imágenes'}
                     </span>
                     <span className="text-xs text-muted-foreground">
-                      PNG, JPG hasta 5MB
+                      Puedes seleccionar varias a la vez · PNG, JPG hasta 5MB · {images.length}/{MAX_IMAGES}
                     </span>
                   </label>
                 </div>
@@ -469,7 +554,7 @@ const PropertyForm = () => {
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={saving}>
+            <Button type="submit" disabled={saving || uploading}>
               {saving ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
