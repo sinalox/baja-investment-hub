@@ -1,10 +1,11 @@
 import { ReactNode } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Loader2 } from 'lucide-react';
 
 interface ProtectedRouteProps {
-  children: ReactNode;
+  // Sin children renderiza las rutas hijas (uso como layout route)
+  children?: ReactNode;
   requireAdmin?: boolean;
 }
 
@@ -36,7 +37,7 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
     );
   }
 
-  return <>{children}</>;
+  return <>{children ?? <Outlet />}</>;
 };
 
 export default ProtectedRoute;

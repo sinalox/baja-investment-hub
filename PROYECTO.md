@@ -311,3 +311,29 @@ Se aplican con la Supabase CLI (`supabase db push`) o desde el panel de Lovable/
 - Para un antispam más fuerte: captcha (Cloudflare Turnstile o hCaptcha) o rate limiting con una Edge Function.
 - `react-hook-form` sigue instalado porque lo usa `components/ui/form.tsx` de shadcn; los formularios usan estado manual con zod.
 - Bundle JS > 500 kB: se podría dividir con `React.lazy` para separar el panel admin de la landing.
+
+---
+
+## 12. Optimización móvil (2026-10-22)
+
+El celular es la fuente principal de visitas, así que el sitio público está optimizado para ese caso.
+
+### Rendimiento
+- **Bundle inicial de 175 KB a 106 KB (gzip).** Solo la landing va en el bundle principal; `PropertyDetail`, `/privacidad` y todo el admin se cargan con `React.lazy`. El detalle de propiedad se precarga 2.5 s después de cargar la landing.
+- **Sin `@supabase/supabase-js` en el sitio público.** [src/lib/publicApi.ts](src/lib/publicApi.ts) habla directo con la API REST (leer propiedades, insertar leads). El cliente completo y el `AuthProvider` viven en [AdminRoot](src/components/admin/AdminRoot.tsx), que envuelve las rutas `/admin`.
+- **Imágenes WebP con versión móvil** (`<picture>`): hero de 343 KB a 44 KB en celular; logos de 60/19 KB a ~10 KB.
+- **Compresión al subir fotos** ([src/lib/imageCompression.ts](src/lib/imageCompression.ts)): el admin reduce cada foto a 1920 px en WebP antes de subirla (≈150–300 KB en vez de 1–5 MB), con caché de un año. Rechaza HEIC que el navegador no pueda convertir.
+- **Fuentes** cargadas desde `index.html` con `preconnect` y los pesos usados (antes los `@import` iban después de `@tailwind` y se ignoraban).
+
+### Experiencia en celular
+- Botón flotante de WhatsApp con mensaje prellenado ([WhatsAppButton](src/components/layout/WhatsAppButton.tsx)).
+- Detalle de propiedad: galería a todo el ancho con deslizamiento táctil, precio bajo el título y barra inferior fija con Llamar / WhatsApp (con el nombre y el enlace de la propiedad) / Me interesa.
+- Menú móvil con fondo oscurecido, scroll bloqueado y áreas táctiles grandes.
+- Secciones compactas: buscador sin etiquetas visibles, pestañas deslizables, beneficios en 2 columnas, pasos en filas, testimonios en carrusel y footer en 2 columnas. La landing pasó de 10,800 px a 7,600 px de alto.
+- Formularios con `inputMode`/`autoComplete` (teclado numérico y autocompletado) y texto de 16 px (sin zoom en iOS).
+- Datos de contacto tocables (llamar, correo, Google Maps).
+- `viewport-fit=cover` y `env(safe-area-inset-bottom)` para la barra de gestos del iPhone.
+
+### Bugs corregidos
+- Scroll horizontal en la sección de contacto y desbordamiento de 552 px en el detalle de propiedad (grid sin `grid-cols-1`/`min-w-0`).
+- `body` con `overflow-x: clip` como red de seguridad.

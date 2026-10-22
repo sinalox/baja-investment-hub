@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { supabase } from '@/integrations/supabase/client';
+import { insertLead } from '@/lib/publicApi';
 
 // Los límites coinciden con la política RLS "Public can insert leads".
 export const publicLeadSchema = z.object({
@@ -55,6 +55,5 @@ export const insertPublicLead = async (
   source: PublicLeadSource,
   notesPrefix?: string,
 ) => {
-  const { error } = await supabase.from('leads').insert(buildPublicLead(data, source, notesPrefix));
-  if (error) throw error;
+  await insertLead(buildPublicLead(data, source, notesPrefix));
 };

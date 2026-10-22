@@ -32,40 +32,42 @@ const HowItWorks = () => {
     <section className="section-padding bg-primary text-primary-foreground">
       <div className="container">
         {/* Header */}
-        <div className="text-center mb-16">
-          <span className="text-accent text-sm font-semibold tracking-widest uppercase mb-4 block">
+        <div className="text-center mb-10 md:mb-16">
+          <span className="text-accent text-xs md:text-sm font-semibold tracking-widest uppercase mb-2 md:mb-4 block">
             Proceso simple
           </span>
-          <h2 className="font-sans text-3xl md:text-4xl lg:text-5xl font-medium mb-4">
+          <h2 className="font-sans text-[1.75rem] md:text-4xl lg:text-5xl font-medium mb-3 md:mb-4">
             ¿Cómo funciona?
           </h2>
-          <p className="text-lg text-primary-foreground/70 max-w-2xl mx-auto">
+          <p className="text-base md:text-lg text-primary-foreground/70 max-w-2xl mx-auto">
             Invertir en bienes raíces nunca fue tan sencillo. Te acompañamos en cada paso del camino.
           </p>
         </div>
 
-        {/* Steps */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        {/* Steps: filas con ícono a la izquierda en móvil, columnas en escritorio */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
           {steps.map((step, index) => (
             <div key={index} className="relative">
               {/* Connector Line */}
               {index < steps.length - 1 && (
                 <div className="hidden lg:block absolute top-12 left-full w-full h-[2px] bg-gradient-to-r from-accent/50 to-transparent -translate-x-1/2" />
               )}
-              
-              <div className="text-center">
+
+              <div className="flex items-start gap-4 text-left md:block md:text-center">
                 {/* Icon */}
-                <div className="relative inline-flex mb-6">
-                  <div className="w-24 h-24 rounded-full bg-accent/10 flex items-center justify-center">
-                    <step.icon className="h-10 w-10 text-accent" />
+                <div className="relative inline-flex shrink-0 md:mb-6">
+                  <div className="w-14 h-14 md:w-24 md:h-24 rounded-full bg-accent/10 flex items-center justify-center">
+                    <step.icon className="h-6 w-6 md:h-10 md:w-10 text-accent" />
                   </div>
-                  <span className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-accent text-accent-foreground text-sm font-bold flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 md:-top-2 md:-right-2 w-6 h-6 md:w-8 md:h-8 rounded-full bg-accent text-accent-foreground text-[0.65rem] md:text-sm font-bold flex items-center justify-center">
                     {step.number}
                   </span>
                 </div>
-                
-                <h3 className="font-sans text-xl font-medium mb-3">{step.title}</h3>
-                <p className="text-primary-foreground/70 leading-relaxed">{step.description}</p>
+
+                <div>
+                  <h3 className="font-sans text-lg md:text-xl font-medium mb-1 md:mb-3">{step.title}</h3>
+                  <p className="text-sm md:text-base text-primary-foreground/70 leading-relaxed">{step.description}</p>
+                </div>
               </div>
             </div>
           ))}

@@ -3,6 +3,7 @@ import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
+import WhatsAppButton from '@/components/layout/WhatsAppButton';
 import { siteConfig, emailUrl } from '@/config/site';
 
 // TODO: texto base según la LFPDPPP. Debe revisarlo un asesor legal antes de
@@ -86,6 +87,7 @@ const PrivacyPolicy = () => {
       </main>
 
       <Footer />
+      <WhatsAppButton />
     </div>
   );
 };

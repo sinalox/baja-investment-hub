@@ -9,16 +9,33 @@ interface HeaderProps {
 
 const Header = ({ solid = false }: HeaderProps) => {
   const [hasScrolled, setHasScrolled] = useState(false);
-  const isScrolled = solid || hasScrolled;
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  // Con el menú móvil abierto la cabecera se muestra sólida
+  const isScrolled = solid || hasScrolled || isMobileMenuOpen;
 
   useEffect(() => {
     const handleScroll = () => {
       setHasScrolled(window.scrollY > 50);
     };
-    window.addEventListener('scroll', handleScroll);
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Menú móvil abierto: bloquear el scroll de la página y cerrar con Escape
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsMobileMenuOpen(false);
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', handleKey);
+    };
+  }, [isMobileMenuOpen]);
 
   const navItems = [
     { label: 'Inicio', href: '/#inicio' },
@@ -97,7 +114,8 @@ const Header = ({ solid = false }: HeaderProps) => {
         {/* Mobile Menu Button */}
         <button
           aria-label={isMobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
-          className={`lg:hidden p-2 transition-colors ${isScrolled ? 'text-foreground' : 'text-white'
+          aria-expanded={isMobileMenuOpen}
+          className={`lg:hidden p-3 -mr-3 transition-colors ${isScrolled ? 'text-foreground' : 'text-white'
             }`}
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         >
@@ -106,27 +124,34 @@ const Header = ({ solid = false }: HeaderProps) => {
       </div>
 
       {/* Mobile Menu */}
+      {isMobileMenuOpen && (
+        <div
+          className="lg:hidden absolute top-full left-0 right-0 h-[100svh] bg-black/40 animate-fade-in"
+          onClick={() => setIsMobileMenuOpen(false)}
+          aria-hidden="true"
+        />
+      )}
       <div
-        className={`lg:hidden absolute top-full left-0 right-0 bg-background shadow-lg transition-all duration-300 ${isMobileMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
+        className={`lg:hidden absolute top-full left-0 right-0 bg-background shadow-lg border-t border-border max-h-[calc(100svh-5rem)] overflow-y-auto transition-all duration-300 ${isMobileMenuOpen ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-2'
           }`}
       >
-        <nav className="container py-6 flex flex-col gap-4">
+        <nav className="container py-4 flex flex-col">
           {navItems.map((item) => (
-            <div key={item.label}>
+            <div key={item.label} className="border-b border-border last:border-0">
               <a
                 href={item.href}
-                className="block py-2 text-foreground font-medium"
+                className="block py-3.5 text-base text-foreground font-medium"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 {item.label}
               </a>
               {item.dropdown && (
-                <div className="pl-4 mt-2 space-y-2">
+                <div className="grid grid-cols-2 gap-2 pb-4">
                   {item.dropdown.map((subItem) => (
                     <a
                       key={subItem.label}
                       href={subItem.href}
-                      className="block py-1.5 text-sm text-muted-foreground hover:text-foreground"
+                      className="rounded-md bg-secondary px-3 py-2.5 text-sm text-foreground/80 hover:text-foreground"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
                       {subItem.label}
@@ -136,7 +161,7 @@ const Header = ({ solid = false }: HeaderProps) => {
               )}
             </div>
           ))}
-          <Button variant="gold" size="lg" className="mt-4" asChild>
+          <Button variant="gold" size="lg" className="mt-4 mb-2" asChild>
             <a href="/#contacto" onClick={() => setIsMobileMenuOpen(false)}>
               Agenda una visita
             </a>

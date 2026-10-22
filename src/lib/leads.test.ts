@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 
-vi.mock('@/integrations/supabase/client', () => ({ supabase: {} }));
+vi.mock('@/lib/publicApi', () => ({ insertLead: vi.fn() }));
 
 import { buildPublicLead, getFieldErrors, isBotSubmission, publicLeadSchema } from './leads';
 

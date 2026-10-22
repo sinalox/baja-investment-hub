@@ -26,8 +26,8 @@ const Testimonials = () => {
     <section className="section-padding bg-secondary/50">
       <div className="container">
         {/* Header */}
-        <div className="text-center mb-16">
-          <span className="text-accent text-sm font-semibold tracking-widest uppercase mb-4 block">
+        <div className="text-center mb-8 md:mb-16">
+          <span className="text-accent text-xs md:text-sm font-semibold tracking-widest uppercase mb-2 md:mb-4 block">
             Testimonios
           </span>
           <h2 className="section-title">Lo que dicen nuestros clientes</h2>
@@ -36,15 +36,15 @@ const Testimonials = () => {
           </p>
         </div>
 
-        {/* Testimonials Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {/* Testimonials: carrusel deslizable en móvil, grid en escritorio */}
+        <div className="scroll-row gap-4 -mx-6 px-6 pb-2 md:grid md:grid-cols-3 md:gap-8 md:mx-0 md:px-0 md:pb-0 md:overflow-visible">
           {testimonials.map((testimonial, index) => (
             <div
               key={index}
-              className="bg-background rounded-lg p-8 shadow-card hover:shadow-lg transition-shadow duration-300"
+              className="shrink-0 w-[85%] sm:w-[60%] md:w-auto snap-center bg-background rounded-lg p-6 md:p-8 shadow-card hover:shadow-lg transition-shadow duration-300"
             >
               {/* Quote Icon */}
-              <Quote className="h-10 w-10 text-accent/30 mb-6" />
+              <Quote className="h-8 w-8 md:h-10 md:w-10 text-accent/30 mb-4 md:mb-6" />
               
               {/* Stars */}
               <div className="flex gap-1 mb-4">
@@ -54,18 +54,19 @@ const Testimonials = () => {
               </div>
 
               {/* Quote */}
-              <p className="text-foreground/80 leading-relaxed mb-6 italic">
+              <p className="text-[0.95rem] md:text-base text-foreground/80 leading-relaxed mb-5 md:mb-6 italic">
                 "{testimonial.quote}"
               </p>
 
               {/* Author */}
-              <div className="pt-6 border-t border-border">
+              <div className="pt-4 md:pt-6 border-t border-border">
                 <div className="font-semibold text-foreground">{testimonial.author}</div>
                 <div className="text-sm text-muted-foreground">{testimonial.role}</div>
               </div>
             </div>
           ))}
         </div>
+        <p className="mt-3 text-center text-xs text-muted-foreground md:hidden">Desliza para ver más →</p>
       </div>
     </section>
   );

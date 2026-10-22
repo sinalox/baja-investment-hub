@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { MessageCircle, Phone, Mail, MapPin, Send, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { siteConfig, whatsappUrl } from '@/config/site';
+import { siteConfig, whatsappUrl, phoneUrl, emailUrl, mapsUrl } from '@/config/site';
 import {
   HONEYPOT_FIELD,
   getFieldErrors,
@@ -92,29 +92,29 @@ const ContactForm = () => {
   return (
     <section id="contacto" className="section-padding bg-background">
       <div className="container">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-20">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-20">
           {/* Left - Info */}
           <div>
-            <span className="text-accent text-sm font-semibold tracking-widest uppercase mb-4 block">
+            <span className="text-accent text-xs md:text-sm font-semibold tracking-widest uppercase mb-2 md:mb-4 block">
               Contáctanos
             </span>
             <h2 className="section-title mb-6">
               ¿Listo para invertir en tu futuro?
             </h2>
-            <p className="text-lg text-muted-foreground mb-10">
+            <p className="text-base md:text-lg text-muted-foreground mb-6 md:mb-10">
               Déjanos tus datos y uno de nuestros asesores se pondrá en contacto contigo 
               para brindarte información personalizada sobre nuestras propiedades.
             </p>
 
-            {/* Contact Info */}
-            <div className="space-y-6">
+            {/* Contact Info: todo tocable en móvil (llamar, correo, mapa) */}
+            <div className="space-y-2 md:space-y-4">
               <a
                 href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-4 p-4 bg-accent/10 rounded-lg hover:bg-accent/20 transition-colors group"
               >
-                <div className="w-12 h-12 rounded-full bg-accent flex items-center justify-center">
+                <div className="w-12 h-12 shrink-0 rounded-full bg-accent flex items-center justify-center">
                   <MessageCircle className="h-6 w-6 text-accent-foreground" />
                 </div>
                 <div>
@@ -125,31 +125,42 @@ const ContactForm = () => {
                 </div>
               </a>
 
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center">
+              <a
+                href={phoneUrl}
+                className="flex items-center gap-4 p-2 -mx-2 rounded-lg hover:bg-secondary/60 transition-colors"
+              >
+                <div className="w-12 h-12 shrink-0 rounded-full bg-secondary flex items-center justify-center">
                   <Phone className="h-5 w-5 text-foreground" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <div className="font-semibold text-foreground">Teléfono</div>
-                  <div className="text-sm text-muted-foreground">{siteConfig.phoneDisplay}</div>
+                  <div className="text-sm text-muted-foreground break-words">{siteConfig.phoneDisplay}</div>
                 </div>
-              </div>
+              </a>
 
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center">
+              <a
+                href={emailUrl}
+                className="flex items-center gap-4 p-2 -mx-2 rounded-lg hover:bg-secondary/60 transition-colors"
+              >
+                <div className="w-12 h-12 shrink-0 rounded-full bg-secondary flex items-center justify-center">
                   <Mail className="h-5 w-5 text-foreground" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <div className="font-semibold text-foreground">Email</div>
-                  <div className="text-sm text-muted-foreground">{siteConfig.email}</div>
+                  <div className="text-sm text-muted-foreground break-words">{siteConfig.email}</div>
                 </div>
-              </div>
+              </a>
 
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center">
+              <a
+                href={mapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-4 p-2 -mx-2 rounded-lg hover:bg-secondary/60 transition-colors"
+              >
+                <div className="w-12 h-12 shrink-0 rounded-full bg-secondary flex items-center justify-center">
                   <MapPin className="h-5 w-5 text-foreground" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <div className="font-semibold text-foreground">Oficina</div>
                   <div className="text-sm text-muted-foreground">
                     {siteConfig.address.line1}
@@ -157,13 +168,13 @@ const ContactForm = () => {
                     {siteConfig.address.line2}
                   </div>
                 </div>
-              </div>
+              </a>
             </div>
           </div>
 
           {/* Right - Form */}
-          <div className="bg-secondary/50 rounded-xl p-8 lg:p-10">
-            <h3 className="font-sans text-2xl font-medium mb-6">
+          <div id="formulario" className="bg-secondary/50 rounded-xl p-5 sm:p-8 lg:p-10 scroll-mt-24">
+            <h3 className="font-sans text-xl md:text-2xl font-medium mb-5 md:mb-6">
               Quiero recibir información
             </h3>
             <form onSubmit={handleSubmit} className="space-y-5" noValidate>
@@ -186,6 +197,7 @@ const ContactForm = () => {
                 <input
                   type="text"
                   name="name"
+                  autoComplete="name"
                   value={formData.name}
                   onChange={handleChange}
                   placeholder="Tu nombre"
@@ -205,6 +217,8 @@ const ContactForm = () => {
                   </label>
                   <input
                     type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
                     name="phone"
                     value={formData.phone}
                     onChange={handleChange}
@@ -223,6 +237,8 @@ const ContactForm = () => {
                   </label>
                   <input
                     type="email"
+                    inputMode="email"
+                    autoComplete="email"
                     name="email"
                     value={formData.email}
                     onChange={handleChange}

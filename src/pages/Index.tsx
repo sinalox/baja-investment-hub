@@ -10,6 +10,7 @@ import HowItWorks from '@/components/sections/HowItWorks';
 import Testimonials from '@/components/sections/Testimonials';
 import ContactForm from '@/components/sections/ContactForm';
 import Footer from '@/components/layout/Footer';
+import WhatsAppButton from '@/components/layout/WhatsAppButton';
 import { emptyFilters, type SearchFilters } from '@/lib/properties';
 
 const Index = () => {
@@ -22,6 +23,15 @@ const Index = () => {
     if (!hash) return;
     document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: 'smooth' });
   }, [hash]);
+
+  // Precargar el detalle de propiedad cuando la landing ya cargó, para que
+  // "Ver detalles" abra sin esperar la descarga del chunk
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      import('./PropertyDetail');
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <div className="min-h-screen">
@@ -37,6 +47,7 @@ const Index = () => {
         <ContactForm />
       </main>
       <Footer />
+      <WhatsAppButton />
     </div>
   );
 };

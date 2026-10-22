@@ -20,6 +20,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
 import { getPropertyImages, moveItem } from '@/lib/properties';
+import { compressImage } from '@/lib/imageCompression';
 
 type PropertyInsert = Database['public']['Tables']['properties']['Insert'];
 type PropertyUpdate = Database['public']['Tables']['properties']['Update'];
@@ -38,7 +39,8 @@ const statuses = [
 ];
 
 const MAX_IMAGES = 20;
-const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+// Tamaño máximo del archivo original; se comprime antes de subirlo
+const MAX_IMAGE_SIZE = 20 * 1024 * 1024;
 
 const PropertyForm = () => {
   const { id } = useParams();
@@ -111,13 +113,22 @@ const PropertyForm = () => {
     setImages(getPropertyImages(property));
   }, [property]);
 
-  const uploadImage = async (file: File) => {
+  const uploadImage = async (original: File) => {
+    const file = await compressImage(original);
+    // HEIC/HEIF (iPhone) que el navegador no pudo convertir: no se verían en la web
+    if (/hei[cf]/i.test(file.type) || /\.hei[cf]$/i.test(file.name)) {
+      throw new Error('Formato HEIC no soportado');
+    }
     const fileExt = file.name.split('.').pop();
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
     const { error } = await supabase.storage
       .from('property-images')
-      .upload(fileName, file);
+      .upload(fileName, file, {
+        contentType: file.type,
+        // Los nombres son únicos, así que el navegador puede cachearlas un año
+        cacheControl: '31536000',
+      });
     if (error) throw error;
 
     const { data: { publicUrl } } = supabase.storage
@@ -139,7 +150,7 @@ const PropertyForm = () => {
     if (rejected > 0) {
       toast({
         title: 'Algunas imágenes no se subieron',
-        description: `${rejected} archivo(s) no son imágenes o pesan más de 5MB`,
+        description: `${rejected} archivo(s) no son imágenes o pesan más de 20MB`,
         variant: 'destructive',
       });
     }
@@ -166,7 +177,7 @@ const PropertyForm = () => {
     if (failed > 0) {
       toast({
         title: 'Error',
-        description: `No se pudieron subir ${failed} imagen(es)`,
+        description: `No se pudieron subir ${failed} imagen(es). Si son fotos HEIC de iPhone, conviértelas a JPG.`,
         variant: 'destructive',
       });
     }
@@ -538,7 +549,7 @@ const PropertyForm = () => {
                           : 'Agregar más imágenes'}
                     </span>
                     <span className="text-xs text-muted-foreground">
-                      Puedes seleccionar varias a la vez · PNG, JPG hasta 5MB · {images.length}/{MAX_IMAGES}
+                      Puedes seleccionar varias a la vez · Se optimizan automáticamente · {images.length}/{MAX_IMAGES}
                     </span>
                   </label>
                 </div>

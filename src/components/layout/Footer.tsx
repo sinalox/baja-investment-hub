@@ -30,10 +30,10 @@ const Footer = () => {
   return (
     <footer className="bg-primary text-primary-foreground">
       {/* Main Footer */}
-      <div className="container py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+      <div className="container py-12 md:py-16">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-10">
           {/* Brand */}
-          <div className="lg:col-span-1">
+          <div className="col-span-2 lg:col-span-1">
             <div className="mb-4">
               <img
                 src="/2.webp"
@@ -66,13 +66,13 @@ const Footer = () => {
 
           {/* Quick Links */}
           <div>
-            <h4 className="font-semibold mb-5">Navegación</h4>
-            <ul className="space-y-3">
+            <h4 className="font-semibold mb-3 md:mb-5">Navegación</h4>
+            <ul className="space-y-1">
               {quickLinks.map((link) => (
                 <li key={link.label}>
                   <a
                     href={link.href}
-                    className="text-primary-foreground/70 hover:text-primary-foreground transition-colors text-sm"
+                    className="inline-block py-1.5 text-primary-foreground/70 hover:text-primary-foreground transition-colors text-sm"
                   >
                     {link.label}
                   </a>
@@ -83,13 +83,13 @@ const Footer = () => {
 
           {/* Property Types */}
           <div>
-            <h4 className="font-semibold mb-5">Propiedades</h4>
-            <ul className="space-y-3">
+            <h4 className="font-semibold mb-3 md:mb-5">Propiedades</h4>
+            <ul className="space-y-1">
               {propertyTypes.map((link) => (
                 <li key={link.label}>
                   <a
                     href={link.href}
-                    className="text-primary-foreground/70 hover:text-primary-foreground transition-colors text-sm"
+                    className="inline-block py-1.5 text-primary-foreground/70 hover:text-primary-foreground transition-colors text-sm"
                   >
                     {link.label}
                   </a>
@@ -99,8 +99,8 @@ const Footer = () => {
           </div>
 
           {/* Contact */}
-          <div>
-            <h4 className="font-semibold mb-5">Contacto</h4>
+          <div className="col-span-2 lg:col-span-1">
+            <h4 className="font-semibold mb-3 md:mb-5">Contacto</h4>
             <ul className="space-y-4">
               <li className="flex items-start gap-3">
                 <MapPin className="h-5 w-5 text-accent mt-0.5 shrink-0" />

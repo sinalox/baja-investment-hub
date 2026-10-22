@@ -3,19 +3,16 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { MapPin, BedDouble, Bath, Maximize, ArrowRight, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { supabase } from '@/integrations/supabase/client';
-import type { Database } from '@/integrations/supabase/types';
+import { fetchActiveProperties, type Property } from '@/lib/publicApi';
 import { categoryHashes, filterProperties, formatPrice, type SearchFilters } from '@/lib/properties';
 
 // Fallback images for properties without images
-import property1 from '@/assets/property-1.jpg';
-import property2 from '@/assets/property-2.jpg';
-import property3 from '@/assets/property-3.jpg';
-import property4 from '@/assets/property-4.jpg';
+import property1 from '@/assets/property-1.webp';
+import property2 from '@/assets/property-2.webp';
+import property3 from '@/assets/property-3.webp';
+import property4 from '@/assets/property-4.webp';
 
 const fallbackImages = [property1, property2, property3, property4];
-
-type Property = Database['public']['Tables']['properties']['Row'];
 
 interface PropertiesProps {
   filters?: SearchFilters;
@@ -41,16 +38,7 @@ const Properties = ({ filters }: PropertiesProps) => {
 
   const { data: properties = [], isLoading: loading } = useQuery({
     queryKey: ['public-properties'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('properties')
-        .select('*')
-        .eq('status', 'active')
-        .order('featured', { ascending: false })
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      return data as Property[];
-    },
+    queryFn: fetchActiveProperties,
   });
 
   // Anclas del menú (#casas, #oficinas, #lotes, #inversion): seleccionan la
@@ -88,8 +76,8 @@ const Properties = ({ filters }: PropertiesProps) => {
     <section id="propiedades" className="section-padding bg-secondary/50">
       <div className="container">
         {/* Header */}
-        <div className="text-center mb-12">
-          <span className="text-accent text-sm font-semibold tracking-widest uppercase mb-4 block">
+        <div className="text-center mb-8 md:mb-12">
+          <span className="text-accent text-xs md:text-sm font-semibold tracking-widest uppercase mb-2 md:mb-4 block">
             Portafolio
           </span>
           <h2 className="section-title">Propiedades en venta</h2>
@@ -98,13 +86,13 @@ const Properties = ({ filters }: PropertiesProps) => {
           </p>
         </div>
 
-        {/* Category Tabs */}
-        <div className="flex flex-wrap justify-center gap-2 mb-10">
+        {/* Category Tabs: fila deslizable en móvil, centrada en escritorio */}
+        <div className="scroll-row gap-2 -mx-6 px-6 mb-6 md:mx-0 md:px-0 md:mb-10 md:flex-wrap md:justify-center md:overflow-visible">
           {categories.map((category) => (
             <button
               key={category.id}
               onClick={() => setActiveCategory(category.id)}
-              className={`px-5 py-2.5 rounded-sm text-sm font-medium transition-all duration-300 ${activeCategory === category.id
+              className={`shrink-0 snap-start whitespace-nowrap px-5 py-2.5 rounded-sm text-sm font-medium transition-all duration-300 ${activeCategory === category.id
                   ? 'bg-primary text-primary-foreground'
                   : 'bg-background text-foreground hover:bg-muted'
                 }`}
@@ -149,6 +137,8 @@ const Properties = ({ filters }: PropertiesProps) => {
                   <img
                     src={getPropertyImage(property, index)}
                     alt={property.title}
+                    loading={index < 2 ? 'eager' : 'lazy'}
+                    decoding="async"
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   />
                   {property.featured && (

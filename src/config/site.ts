@@ -21,5 +21,11 @@ export const siteConfig = {
 };
 
 export const whatsappUrl = `https://wa.me/${siteConfig.whatsapp}`;
+// Enlace de WhatsApp con mensaje prellenado
+export const whatsappLink = (message: string) =>
+  `${whatsappUrl}?text=${encodeURIComponent(message)}`;
 export const phoneUrl = `tel:+${siteConfig.phone}`;
 export const emailUrl = `mailto:${siteConfig.email}`;
+export const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+  `${siteConfig.address.line1}, ${siteConfig.address.line2}`,
+)}`;

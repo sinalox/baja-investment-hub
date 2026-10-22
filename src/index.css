@@ -2,9 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-@import url("https://fonts.googleapis.com/css2?family=Poppins&display=swap");
 
 
 
@@ -137,6 +135,10 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', sans-serif;
+    /* Red de seguridad contra scroll horizontal en móvil. clip (a diferencia
+       de hidden) no rompe position: sticky */
+    overflow-x: clip;
+    -webkit-tap-highlight-color: transparent;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -186,15 +188,26 @@
 
   /* Section styling */
   .section-padding {
-    @apply py-20 md:py-28 lg:py-32;
+    @apply py-14 md:py-28 lg:py-32;
   }
 
   .section-title {
-    @apply text-3xl md:text-4xl lg:text-5xl font-medium mb-4;
+    @apply text-[1.75rem] leading-tight md:text-4xl lg:text-5xl font-medium mb-3 md:mb-4;
   }
 
   .section-subtitle {
-    @apply text-lg md:text-xl text-muted-foreground max-w-2xl;
+    @apply text-base md:text-xl text-muted-foreground max-w-2xl;
+  }
+
+  /* Fila con scroll horizontal y snap (carruseles en móvil) */
+  .scroll-row {
+    @apply flex overflow-x-auto snap-x snap-mandatory;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .scroll-row::-webkit-scrollbar {
+    display: none;
   }
 
   /* Animated underline for links */
