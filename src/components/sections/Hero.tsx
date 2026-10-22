@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Play } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import heroBaja from '@/assets/hero-baja.jpg';
 
 const Hero = () => {
@@ -38,12 +38,14 @@ const Hero = () => {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 animate-fade-in-up opacity-0 delay-300">
-            <Button variant="heroPrimary" size="xl" className="w-full sm:w-auto">
-              Ver propiedades
-              <ArrowRight className="h-5 w-5" />
+            <Button variant="heroPrimary" size="xl" className="w-full sm:w-auto" asChild>
+              <a href="#propiedades">
+                Ver propiedades
+                <ArrowRight className="h-5 w-5" />
+              </a>
             </Button>
-            <Button variant="heroOutline" size="xl" className="w-full sm:w-auto">
-              Agenda una visita
+            <Button variant="heroOutline" size="xl" className="w-full sm:w-auto" asChild>
+              <a href="#contacto">Agenda una visita</a>
             </Button>
           </div>
 

@@ -1,30 +1,39 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { MessageCircle, Phone, Mail, MapPin, Send, Loader2 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { z } from 'zod';
+import { siteConfig, whatsappUrl } from '@/config/site';
+import {
+  HONEYPOT_FIELD,
+  getFieldErrors,
+  insertPublicLead,
+  isBotSubmission,
+  publicLeadSchema,
+  type PublicLeadErrors,
+} from '@/lib/leads';
 
-const contactSchema = z.object({
-  name: z.string().trim().min(1, 'El nombre es requerido').max(100, 'El nombre es muy largo'),
-  phone: z.string().trim().min(1, 'El teléfono es requerido').max(20, 'El teléfono es muy largo'),
-  email: z.string().trim().email('Email inválido').max(255, 'El email es muy largo').or(z.literal('')),
-  property_type: z.string().min(1, 'Selecciona un tipo de propiedad'),
-  message: z.string().trim().max(1000, 'El mensaje es muy largo').optional(),
-});
+interface ContactFormState {
+  name: string;
+  phone: string;
+  email: string;
+  property_type: string;
+  message: string;
+}
 
-type ContactFormData = z.infer<typeof contactSchema>;
+const emptyForm: ContactFormState = {
+  name: '',
+  phone: '',
+  email: '',
+  property_type: '',
+  message: '',
+};
 
 const ContactForm = () => {
-  const [formData, setFormData] = useState<ContactFormData>({
-    name: '',
-    phone: '',
-    email: '',
-    property_type: '',
-    message: '',
-  });
+  const [formData, setFormData] = useState<ContactFormState>(emptyForm);
+  const [honeypot, setHoneypot] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<Partial<Record<keyof ContactFormData, string>>>({});
+  const [errors, setErrors] = useState<PublicLeadErrors>({});
   const { toast } = useToast();
 
   const handleChange = (
@@ -33,9 +42,17 @@ const ContactForm = () => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     // Clear error when user types
-    if (errors[name as keyof ContactFormData]) {
+    if (errors[name as keyof PublicLeadErrors]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
+  };
+
+  const showSuccess = () => {
+    toast({
+      title: '¡Mensaje enviado!',
+      description: 'Nos pondremos en contacto contigo pronto.',
+    });
+    setFormData(emptyForm);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -43,45 +60,23 @@ const ContactForm = () => {
     setErrors({});
 
     // Validate form data
-    const result = contactSchema.safeParse(formData);
+    const result = publicLeadSchema.safeParse(formData);
     if (!result.success) {
-      const fieldErrors: Partial<Record<keyof ContactFormData, string>> = {};
-      result.error.errors.forEach((err) => {
-        const field = err.path[0] as keyof ContactFormData;
-        fieldErrors[field] = err.message;
-      });
-      setErrors(fieldErrors);
+      setErrors(getFieldErrors(result.error));
+      return;
+    }
+
+    // Bot: simulamos éxito sin guardar nada
+    if (isBotSubmission(honeypot)) {
+      showSuccess();
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase.from('leads').insert({
-        name: result.data.name,
-        phone: result.data.phone,
-        email: result.data.email || null,
-        property_type: result.data.property_type,
-        notes: result.data.message || null,
-        status: 'nuevo',
-        source: 'formulario_web',
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: '¡Mensaje enviado!',
-        description: 'Nos pondremos en contacto contigo pronto.',
-      });
-
-      // Reset form
-      setFormData({
-        name: '',
-        phone: '',
-        email: '',
-        property_type: '',
-        message: '',
-      });
+      await insertPublicLead(result.data, 'formulario_web');
+      showSuccess();
     } catch (error) {
       console.error('Error submitting form:', error);
       toast({
@@ -114,7 +109,7 @@ const ContactForm = () => {
             {/* Contact Info */}
             <div className="space-y-6">
               <a
-                href="https://wa.me/526461234567"
+                href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-4 p-4 bg-accent/10 rounded-lg hover:bg-accent/20 transition-colors group"
@@ -126,7 +121,7 @@ const ContactForm = () => {
                   <div className="font-semibold text-foreground group-hover:text-accent">
                     WhatsApp
                   </div>
-                  <div className="text-sm text-muted-foreground">+52 646 123 4567</div>
+                  <div className="text-sm text-muted-foreground">{siteConfig.phoneDisplay}</div>
                 </div>
               </a>
 
@@ -136,7 +131,7 @@ const ContactForm = () => {
                 </div>
                 <div>
                   <div className="font-semibold text-foreground">Teléfono</div>
-                  <div className="text-sm text-muted-foreground">+52 646 123 4567</div>
+                  <div className="text-sm text-muted-foreground">{siteConfig.phoneDisplay}</div>
                 </div>
               </div>
 
@@ -146,7 +141,7 @@ const ContactForm = () => {
                 </div>
                 <div>
                   <div className="font-semibold text-foreground">Email</div>
-                  <div className="text-sm text-muted-foreground">info@heredialandbaja.com</div>
+                  <div className="text-sm text-muted-foreground">{siteConfig.email}</div>
                 </div>
               </div>
 
@@ -157,9 +152,9 @@ const ContactForm = () => {
                 <div>
                   <div className="font-semibold text-foreground">Oficina</div>
                   <div className="text-sm text-muted-foreground">
-                    Blvd. Costero 1500, Zona Centro
+                    {siteConfig.address.line1}
                     <br />
-                    Ensenada, Baja California, México
+                    {siteConfig.address.line2}
                   </div>
                 </div>
               </div>
@@ -171,7 +166,19 @@ const ContactForm = () => {
             <h3 className="font-sans text-2xl font-medium mb-6">
               Quiero recibir información
             </h3>
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+              {/* Honeypot antispam: oculto para personas */}
+              <input
+                type="text"
+                name={HONEYPOT_FIELD}
+                value={honeypot}
+                onChange={(e) => setHoneypot(e.target.value)}
+                tabIndex={-1}
+                autoComplete="off"
+                aria-hidden="true"
+                className="hidden"
+              />
+
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
                   Nombre completo *
@@ -263,8 +270,13 @@ const ContactForm = () => {
                   onChange={handleChange}
                   rows={4}
                   placeholder="Cuéntanos qué estás buscando..."
-                  className="w-full px-4 py-3 bg-background border border-border rounded-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all resize-none"
+                  className={`w-full px-4 py-3 bg-background border rounded-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all resize-none ${
+                    errors.message ? 'border-destructive' : 'border-border'
+                  }`}
                 />
+                {errors.message && (
+                  <p className="text-sm text-destructive mt-1">{errors.message}</p>
+                )}
               </div>
 
               <Button 
@@ -289,9 +301,9 @@ const ContactForm = () => {
 
               <p className="text-xs text-muted-foreground text-center">
                 Al enviar este formulario, aceptas nuestra{' '}
-                <a href="#" className="text-accent hover:underline">
-                  política de privacidad
-                </a>
+                <Link to="/privacidad" className="text-accent hover:underline">
+                  aviso de privacidad
+                </Link>
               </p>
             </form>
           </div>

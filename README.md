@@ -1,73 +1,49 @@
-# Welcome to your Lovable project
+# Baja Investment Hub
 
-## Project info
+Sitio web inmobiliario de **Heredia Land Baja** con CRM interno para propiedades y prospectos.
+React + Vite + Tailwind + shadcn/ui, con Supabase como backend.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+La documentación completa (arquitectura, base de datos, rutas, flujo de leads) está en [PROYECTO.md](PROYECTO.md).
 
-## How can I edit this code?
-
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+## Inicio rápido
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+cp .env.example .env   # y completar con los datos del proyecto de Supabase
+npm install
+npm run dev            # http://localhost:8080
 ```
 
-**Edit a file directly in GitHub**
+## Scripts
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+| Comando | Descripción |
+|---------|-------------|
+| `npm run dev` | Servidor de desarrollo |
+| `npm run build` | Build de producción en `dist/` |
+| `npm run preview` | Sirve el build localmente |
+| `npm run lint` | ESLint |
+| `npm test` | Tests con Vitest |
 
-**Use GitHub Codespaces**
+## Datos de contacto
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Teléfono, WhatsApp, email, dirección y redes sociales se configuran en un único lugar:
+[src/config/site.ts](src/config/site.ts).
 
-## What technologies are used for this project?
+## Base de datos
 
-This project is built with:
+Las migraciones están en `supabase/migrations/`. Para aplicarlas:
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+```sh
+supabase link --project-ref <project-id>
+supabase db push
+```
 
-## How can I deploy this project?
+Para dar acceso de administrador a un usuario de Supabase Auth:
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+```sql
+INSERT INTO public.user_roles (user_id, role) VALUES ('<uuid-del-usuario>', 'admin');
+```
 
-## Can I connect a custom domain to my Lovable project?
+## Despliegue
 
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Es una SPA estática; `public/_redirects` redirige todas las rutas a `index.html`.
+Las variables `VITE_SUPABASE_*` deben configurarse en el proveedor de hosting, porque `.env` no se sube al repositorio.

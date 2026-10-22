@@ -1,23 +1,14 @@
 import { useState } from 'react';
 import { Search, MapPin, Home, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-
-interface SearchFilters {
-  propertyType: string;
-  location: string;
-  priceRange: string;
-}
+import { emptyFilters, type SearchFilters } from '@/lib/properties';
 
 interface PropertySearchProps {
   onSearch?: (filters: SearchFilters) => void;
 }
 
 const PropertySearch = ({ onSearch }: PropertySearchProps) => {
-  const [filters, setFilters] = useState<SearchFilters>({
-    propertyType: '',
-    location: '',
-    priceRange: '',
-  });
+  const [filters, setFilters] = useState<SearchFilters>(emptyFilters);
 
   const handleChange = (field: keyof SearchFilters, value: string) => {
     const newFilters = { ...filters, [field]: value };

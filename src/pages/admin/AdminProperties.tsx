@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,6 +28,7 @@ import { Plus, Pencil, Trash2, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
+import { formatPrice } from '@/lib/properties';
 
 type Property = Database['public']['Tables']['properties']['Row'];
 
@@ -44,33 +46,31 @@ const statusColors: Record<string, string> = {
 };
 
 const AdminProperties = () => {
-  const [properties, setProperties] = useState<Property[]>([]);
-  const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const fetchProperties = async () => {
-    const { data, error } = await supabase
-      .from('properties')
-      .select('*')
-      .order('created_at', { ascending: false });
+  const { data: properties = [], isLoading: loading, isError } = useQuery({
+    queryKey: ['admin-properties'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('properties')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data as Property[];
+    },
+  });
 
-    if (error) {
-      console.error('Error fetching properties:', error);
+  useEffect(() => {
+    if (isError) {
       toast({
         title: 'Error',
         description: 'No se pudieron cargar las propiedades',
         variant: 'destructive',
       });
-    } else {
-      setProperties(data || []);
     }
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    fetchProperties();
-  }, []);
+  }, [isError, toast]);
 
   const handleDelete = async (id: string) => {
     setDeleting(id);
@@ -91,18 +91,12 @@ const AdminProperties = () => {
         title: 'Éxito',
         description: 'Propiedad eliminada correctamente',
       });
-      setProperties(properties.filter(p => p.id !== id));
+      queryClient.invalidateQueries({ queryKey: ['admin-properties'] });
+      queryClient.invalidateQueries({ queryKey: ['property-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['public-properties'] });
     }
     
     setDeleting(null);
-  };
-
-  const formatPrice = (price: number, currency: string) => {
-    return new Intl.NumberFormat('es-MX', {
-      style: 'currency',
-      currency: currency,
-      minimumFractionDigits: 0,
-    }).format(price);
   };
 
   return (

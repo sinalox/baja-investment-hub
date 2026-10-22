@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import AdminLayout from '@/components/admin/AdminLayout';
@@ -29,6 +28,14 @@ interface PropertyStats {
   inversion: number;
 }
 
+const emptyStats: PropertyStats = {
+  total: 0,
+  casas: 0,
+  oficinas: 0,
+  lotes: 0,
+  inversion: 0,
+};
+
 interface Lead {
   id: string;
   status: string;
@@ -37,41 +44,23 @@ interface Lead {
 }
 
 const AdminDashboard = () => {
-  const [stats, setStats] = useState<PropertyStats>({
-    total: 0,
-    casas: 0,
-    oficinas: 0,
-    lotes: 0,
-    inversion: 0,
-  });
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchStats = async () => {
+  const { data: stats = emptyStats, isLoading: loading } = useQuery({
+    queryKey: ['property-stats'],
+    queryFn: async (): Promise<PropertyStats> => {
       const { data, error } = await supabase
         .from('properties')
         .select('type');
+      if (error) throw error;
 
-      if (error) {
-        console.error('Error fetching stats:', error);
-        setLoading(false);
-        return;
-      }
-
-      const counts = {
+      return {
         total: data.length,
         casas: data.filter(p => p.type === 'casa').length,
         oficinas: data.filter(p => p.type === 'oficina').length,
         lotes: data.filter(p => p.type === 'lote').length,
         inversion: data.filter(p => p.type === 'inversion').length,
       };
-
-      setStats(counts);
-      setLoading(false);
-    };
-
-    fetchStats();
-  }, []);
+    },
+  });
 
   // Fetch leads data
   const { data: leads = [] } = useQuery({

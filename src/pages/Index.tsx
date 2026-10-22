@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import Header from '@/components/layout/Header';
 import Hero from '@/components/sections/Hero';
 import PropertySearch from '@/components/sections/PropertySearch';
@@ -9,19 +10,18 @@ import HowItWorks from '@/components/sections/HowItWorks';
 import Testimonials from '@/components/sections/Testimonials';
 import ContactForm from '@/components/sections/ContactForm';
 import Footer from '@/components/layout/Footer';
-
-interface SearchFilters {
-  propertyType: string;
-  location: string;
-  priceRange: string;
-}
+import { emptyFilters, type SearchFilters } from '@/lib/properties';
 
 const Index = () => {
-  const [searchFilters, setSearchFilters] = useState<SearchFilters>({
-    propertyType: '',
-    location: '',
-    priceRange: '',
-  });
+  const [searchFilters, setSearchFilters] = useState<SearchFilters>(emptyFilters);
+  const { hash } = useLocation();
+
+  // Al llegar desde otra ruta (p. ej. "/#propiedades") el navegador no hace
+  // scroll al ancla por sí solo en una SPA
+  useEffect(() => {
+    if (!hash) return;
+    document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: 'smooth' });
+  }, [hash]);
 
   return (
     <div className="min-h-screen">

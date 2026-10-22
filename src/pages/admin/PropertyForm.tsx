@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -40,8 +41,8 @@ const PropertyForm = () => {
   const isEditing = !!id;
   const navigate = useNavigate();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -62,49 +63,50 @@ const PropertyForm = () => {
     image_url: '',
   });
 
+  const { data: property, isLoading: loading, isError } = useQuery({
+    queryKey: ['admin-property', id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('properties')
+        .select('*')
+        .eq('id', id!)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: isEditing,
+  });
+
   useEffect(() => {
-    if (isEditing) {
-      fetchProperty();
-    }
-  }, [id]);
-
-  const fetchProperty = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from('properties')
-      .select('*')
-      .eq('id', id)
-      .single();
-
-    if (error) {
+    if (isError) {
       toast({
         title: 'Error',
         description: 'No se pudo cargar la propiedad',
         variant: 'destructive',
       });
       navigate('/admin/properties');
-    } else if (data) {
-      setFormData({
-        title: data.title,
-        type: data.type,
-        category: data.category,
-        location: data.location,
-        price: String(data.price),
-        currency: data.currency,
-        beds: data.beds ? String(data.beds) : '',
-        baths: data.baths ? String(data.baths) : '',
-        area: data.area,
-        description: data.description || '',
-        featured: data.featured,
-        status: data.status,
-        image_url: data.image_url || '',
-      });
-      if (data.image_url) {
-        setImagePreview(data.image_url);
-      }
     }
-    setLoading(false);
-  };
+  }, [isError, navigate, toast]);
+
+  useEffect(() => {
+    if (!property) return;
+    setFormData({
+      title: property.title,
+      type: property.type,
+      category: property.category,
+      location: property.location,
+      price: String(property.price),
+      currency: property.currency,
+      beds: property.beds ? String(property.beds) : '',
+      baths: property.baths ? String(property.baths) : '',
+      area: property.area,
+      description: property.description || '',
+      featured: property.featured,
+      status: property.status,
+      image_url: property.image_url || '',
+    });
+    setImagePreview(property.image_url || null);
+  }, [property]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -209,6 +211,11 @@ const PropertyForm = () => {
         title: 'Éxito',
         description: `Propiedad ${isEditing ? 'actualizada' : 'creada'} correctamente`,
       });
+      queryClient.invalidateQueries({ queryKey: ['admin-properties'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-property', id] });
+      queryClient.invalidateQueries({ queryKey: ['property-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['public-properties'] });
+      queryClient.invalidateQueries({ queryKey: ['property', id] });
       navigate('/admin/properties');
     }
 

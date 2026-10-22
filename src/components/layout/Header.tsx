@@ -2,33 +2,39 @@ import { useState, useEffect } from 'react';
 import { Menu, X, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-const Header = () => {
-  const [isScrolled, setIsScrolled] = useState(false);
+interface HeaderProps {
+  // Fondo sólido desde el inicio, para páginas sin hero oscuro
+  solid?: boolean;
+}
+
+const Header = ({ solid = false }: HeaderProps) => {
+  const [hasScrolled, setHasScrolled] = useState(false);
+  const isScrolled = solid || hasScrolled;
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
+      setHasScrolled(window.scrollY > 50);
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const navItems = [
-    { label: 'Inicio', href: '#inicio' },
+    { label: 'Inicio', href: '/#inicio' },
     {
       label: 'Propiedades',
-      href: '#propiedades',
+      href: '/#propiedades',
       dropdown: [
-        { label: 'Casas', href: '#casas' },
-        { label: 'Oficinas', href: '#oficinas' },
-        { label: 'Lotes Residenciales', href: '#lotes' },
-        { label: 'Terrenos de Inversión', href: '#inversion' },
+        { label: 'Casas', href: '/#casas' },
+        { label: 'Oficinas', href: '/#oficinas' },
+        { label: 'Lotes Residenciales', href: '/#lotes' },
+        { label: 'Terrenos de Inversión', href: '/#inversion' },
       ],
     },
-    { label: 'Desarrollos', href: '#desarrollos' },
-    { label: 'Sobre Nosotros', href: '#nosotros' },
-    { label: 'Contacto', href: '#contacto' },
+    { label: 'Desarrollos', href: '/#desarrollos' },
+    { label: 'Sobre Nosotros', href: '/#nosotros' },
+    { label: 'Contacto', href: '/#contacto' },
   ];
 
   return (
@@ -40,7 +46,7 @@ const Header = () => {
     >
       <div className="container mx-auto flex items-center justify-between">
         {/* Logo */}
-        <a href="#" className="flex items-center gap-3">
+        <a href="/" className="flex items-center gap-3">
           <img
             src={isScrolled ? "/1.webp" : "/2.webp"}
             alt="Heredia Land Baja"
@@ -83,13 +89,14 @@ const Header = () => {
 
         {/* CTA Button */}
         <div className="hidden lg:block">
-          <Button variant="gold" size="lg">
-            Agenda una visita
+          <Button variant="gold" size="lg" asChild>
+            <a href="/#contacto">Agenda una visita</a>
           </Button>
         </div>
 
         {/* Mobile Menu Button */}
         <button
+          aria-label={isMobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
           className={`lg:hidden p-2 transition-colors ${isScrolled ? 'text-foreground' : 'text-white'
             }`}
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -129,8 +136,10 @@ const Header = () => {
               )}
             </div>
           ))}
-          <Button variant="gold" size="lg" className="mt-4">
-            Agenda una visita
+          <Button variant="gold" size="lg" className="mt-4" asChild>
+            <a href="/#contacto" onClick={() => setIsMobileMenuOpen(false)}>
+              Agenda una visita
+            </a>
           </Button>
         </nav>
       </div>

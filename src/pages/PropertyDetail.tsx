@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import {
     MapPin,
     BedDouble,
@@ -11,7 +12,6 @@ import {
     Phone,
     MessageCircle,
     Loader2,
-    X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,14 +30,19 @@ import Footer from '@/components/layout/Footer';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
+import { siteConfig, phoneUrl, whatsappUrl } from '@/config/site';
+import { formatPrice } from '@/lib/properties';
+import {
+    HONEYPOT_FIELD,
+    getFieldErrors,
+    insertPublicLead,
+    isBotSubmission,
+    publicLeadSchema,
+    type PublicLeadErrors,
+} from '@/lib/leads';
 
-// Fallback images
+// Fallback image
 import property1 from '@/assets/property-1.jpg';
-import property2 from '@/assets/property-2.jpg';
-import property3 from '@/assets/property-3.jpg';
-import property4 from '@/assets/property-4.jpg';
-
-const fallbackImages = [property1, property2, property3, property4];
 
 type Property = Database['public']['Tables']['properties']['Row'];
 
@@ -48,83 +53,88 @@ const typeLabels: Record<string, string> = {
     inversion: 'Terreno de Inversión',
 };
 
+const emptyForm = {
+    name: '',
+    phone: '',
+    email: '',
+    message: '',
+};
+
 const PropertyDetail = () => {
     const { id } = useParams();
     const { toast } = useToast();
-    const [property, setProperty] = useState<Property | null>(null);
-    const [loading, setLoading] = useState(true);
     const [isInterestModalOpen, setIsInterestModalOpen] = useState(false);
     const [submitting, setSubmitting] = useState(false);
-    const [formData, setFormData] = useState({
-        name: '',
-        phone: '',
-        email: '',
-        message: '',
-    });
+    const [formData, setFormData] = useState(emptyForm);
+    const [honeypot, setHoneypot] = useState('');
+    const [errors, setErrors] = useState<PublicLeadErrors>({});
 
-    useEffect(() => {
-        const fetchProperty = async () => {
-            if (!id) return;
-
+    const { data: property = null, isLoading: loading } = useQuery({
+        queryKey: ['property', id],
+        queryFn: async () => {
             const { data, error } = await supabase
                 .from('properties')
                 .select('*')
-                .eq('id', id)
-                .single();
+                .eq('id', id!)
+                .maybeSingle();
+            if (error) throw error;
+            return data as Property | null;
+        },
+        enabled: !!id,
+    });
 
-            if (error) {
-                console.error('Error fetching property:', error);
-            } else {
-                setProperty(data);
+    const handleShare = async () => {
+        const url = window.location.href;
+        try {
+            if (navigator.share) {
+                await navigator.share({ title: property?.title, url });
+                return;
             }
-            setLoading(false);
-        };
-
-        fetchProperty();
-    }, [id]);
-
-    const formatPrice = (price: number, currency: string) => {
-        return new Intl.NumberFormat('es-MX', {
-            style: 'currency',
-            currency: currency,
-            minimumFractionDigits: 0,
-        }).format(price);
+            await navigator.clipboard.writeText(url);
+            toast({ title: 'Enlace copiado', description: 'El enlace de la propiedad está en tu portapapeles.' });
+        } catch (error) {
+            // El usuario canceló el diálogo de compartir
+            if (error instanceof DOMException && error.name === 'AbortError') return;
+            toast({ title: 'Error', description: 'No se pudo compartir el enlace.', variant: 'destructive' });
+        }
     };
 
     const handleSubmitInterest = async (e: React.FormEvent) => {
         e.preventDefault();
+        setErrors({});
 
-        if (!formData.name || !formData.phone) {
+        const result = publicLeadSchema.safeParse({
+            ...formData,
+            property_type: property?.type,
+        });
+        if (!result.success) {
+            setErrors(getFieldErrors(result.error));
+            return;
+        }
+
+        const onSuccess = () => {
             toast({
-                title: 'Error',
-                description: 'Por favor completa los campos requeridos.',
-                variant: 'destructive',
+                title: '¡Mensaje enviado!',
+                description: 'Un asesor se pondrá en contacto contigo pronto.',
             });
+            setFormData(emptyForm);
+            setIsInterestModalOpen(false);
+        };
+
+        // Bot: simulamos éxito sin guardar nada
+        if (isBotSubmission(honeypot)) {
+            onSuccess();
             return;
         }
 
         setSubmitting(true);
 
         try {
-            const { error } = await supabase.from('leads').insert({
-                name: formData.name,
-                phone: formData.phone,
-                email: formData.email || null,
-                property_type: property?.type || 'casa',
-                notes: `Interesado en: ${property?.title}\nUbicación: ${property?.location}\nPrecio: ${property ? formatPrice(Number(property.price), property.currency) : ''}\n\n${formData.message || ''}`,
-                status: 'nuevo',
-                source: 'pagina_propiedad',
-            });
-
-            if (error) throw error;
-
-            toast({
-                title: '¡Mensaje enviado!',
-                description: 'Un asesor se pondrá en contacto contigo pronto.',
-            });
-
-            setFormData({ name: '', phone: '', email: '', message: '' });
-            setIsInterestModalOpen(false);
+            const notesPrefix = property
+                ? `Interesado en: ${property.title}\nUbicación: ${property.location}\nPrecio: ${formatPrice(Number(property.price), property.currency)}`
+                : undefined;
+            await insertPublicLead(result.data, 'pagina_propiedad', notesPrefix);
+            onSuccess();
         } catch (error) {
             console.error('Error submitting interest:', error);
             toast({
@@ -148,8 +158,8 @@ const PropertyDetail = () => {
     if (!property) {
         return (
             <div className="min-h-screen">
-                <Header />
-                <main className="container py-20 text-center">
+                <Header solid />
+                <main className="container pt-32 pb-20 text-center">
                     <h1 className="text-2xl font-sans mb-4">Propiedad no encontrada</h1>
                     <p className="text-muted-foreground mb-8">
                         La propiedad que buscas no existe o ya no está disponible.
@@ -163,13 +173,13 @@ const PropertyDetail = () => {
         );
     }
 
-    const propertyImage = property.image_url || fallbackImages[0];
+    const propertyImage = property.image_url || property1;
 
     return (
         <div className="min-h-screen">
-            <Header />
+            <Header solid />
 
-            <main>
+            <main className="pt-20 md:pt-24">
                 {/* Breadcrumb */}
                 <div className="bg-secondary/50 py-4">
                     <div className="container">
@@ -212,10 +222,13 @@ const PropertyDetail = () => {
                                     </div>
                                 )}
                                 <div className="absolute top-4 right-4 flex gap-2">
-                                    <Button variant="secondary" size="icon" className="rounded-full">
-                                        <Heart className="h-5 w-5" />
-                                    </Button>
-                                    <Button variant="secondary" size="icon" className="rounded-full">
+                                    <Button
+                                        variant="secondary"
+                                        size="icon"
+                                        className="rounded-full"
+                                        onClick={handleShare}
+                                        aria-label="Compartir propiedad"
+                                    >
                                         <Share2 className="h-5 w-5" />
                                     </Button>
                                 </div>
@@ -307,14 +320,14 @@ const PropertyDetail = () => {
                                     </Button>
 
                                     <Button variant="outline" size="lg" className="w-full" asChild>
-                                        <a href="https://wa.me/526461234567" target="_blank" rel="noopener noreferrer">
+                                        <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
                                             <MessageCircle className="h-5 w-5" />
                                             WhatsApp
                                         </a>
                                     </Button>
 
                                     <Button variant="outline" size="lg" className="w-full" asChild>
-                                        <a href="tel:+526461234567">
+                                        <a href={phoneUrl}>
                                             <Phone className="h-5 w-5" />
                                             Llamar ahora
                                         </a>
@@ -344,7 +357,19 @@ const PropertyDetail = () => {
                         </DialogDescription>
                     </DialogHeader>
 
-                    <form onSubmit={handleSubmitInterest} className="space-y-4">
+                    <form onSubmit={handleSubmitInterest} className="space-y-4" noValidate>
+                        {/* Honeypot antispam: oculto para personas */}
+                        <input
+                            type="text"
+                            name={HONEYPOT_FIELD}
+                            value={honeypot}
+                            onChange={(e) => setHoneypot(e.target.value)}
+                            tabIndex={-1}
+                            autoComplete="off"
+                            aria-hidden="true"
+                            className="hidden"
+                        />
+
                         <div className="space-y-2">
                             <Label htmlFor="name">Nombre completo *</Label>
                             <Input
@@ -354,6 +379,7 @@ const PropertyDetail = () => {
                                 placeholder="Tu nombre"
                                 required
                             />
+                            {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
                         </div>
 
                         <div className="space-y-2">
@@ -362,9 +388,10 @@ const PropertyDetail = () => {
                                 id="phone"
                                 value={formData.phone}
                                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                placeholder="+52 646 123 4567"
+                                placeholder={siteConfig.phoneDisplay}
                                 required
                             />
+                            {errors.phone && <p className="text-sm text-destructive">{errors.phone}</p>}
                         </div>
 
                         <div className="space-y-2">
@@ -376,6 +403,7 @@ const PropertyDetail = () => {
                                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                 placeholder="tu@email.com"
                             />
+                            {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
                         </div>
 
                         <div className="space-y-2">
@@ -387,6 +415,7 @@ const PropertyDetail = () => {
                                 placeholder="Cuéntanos qué te gustaría saber..."
                                 rows={3}
                             />
+                            {errors.message && <p className="text-sm text-destructive">{errors.message}</p>}
                         </div>
 
                         <DialogFooter>

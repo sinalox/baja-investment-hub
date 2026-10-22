@@ -1,9 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { MapPin, BedDouble, Bath, Maximize, ArrowRight, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
+import { categoryHashes, filterProperties, formatPrice, type SearchFilters } from '@/lib/properties';
 
 // Fallback images for properties without images
 import property1 from '@/assets/property-1.jpg';
@@ -14,12 +16,6 @@ import property4 from '@/assets/property-4.jpg';
 const fallbackImages = [property1, property2, property3, property4];
 
 type Property = Database['public']['Tables']['properties']['Row'];
-
-interface SearchFilters {
-  propertyType: string;
-  location: string;
-  priceRange: string;
-}
 
 interface PropertiesProps {
   filters?: SearchFilters;
@@ -40,84 +36,42 @@ const typeLabels: Record<string, string> = {
   inversion: 'Inversión',
 };
 
-const locationKeywords: Record<string, string[]> = {
-  ensenada: ['ensenada'],
-  rosarito: ['rosarito'],
-  tijuana: ['tijuana'],
-  'san-quintin': ['san quintín', 'san quintin'],
-  'valle-guadalupe': ['valle de guadalupe', 'valle guadalupe'],
-};
-
 const Properties = ({ filters }: PropertiesProps) => {
   const [activeCategory, setActiveCategory] = useState('all');
-  const [properties, setProperties] = useState<Property[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchProperties = async () => {
+  const { data: properties = [], isLoading: loading } = useQuery({
+    queryKey: ['public-properties'],
+    queryFn: async () => {
       const { data, error } = await supabase
         .from('properties')
         .select('*')
         .eq('status', 'active')
         .order('featured', { ascending: false })
         .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data as Property[];
+    },
+  });
 
-      if (error) {
-        console.error('Error fetching properties:', error);
-      } else {
-        setProperties(data || []);
-      }
-      setLoading(false);
+  // Anclas del menú (#casas, #oficinas, #lotes, #inversion): seleccionan la
+  // categoría y llevan al catálogo
+  useEffect(() => {
+    const applyHash = () => {
+      const category = categoryHashes[window.location.hash.slice(1)];
+      if (!category) return;
+      setActiveCategory(category);
+      document.getElementById('propiedades')?.scrollIntoView({ behavior: 'smooth' });
     };
 
-    fetchProperties();
+    applyHash();
+    window.addEventListener('hashchange', applyHash);
+    return () => window.removeEventListener('hashchange', applyHash);
   }, []);
 
-  // Apply filters from PropertySearch
-  const filteredProperties = useMemo(() => {
-    let result = properties;
-
-    // Filter by category tab
-    if (activeCategory !== 'all') {
-      result = result.filter(p => p.type === activeCategory);
-    }
-
-    // Filter by property type from search
-    if (filters?.propertyType) {
-      result = result.filter(p => p.type === filters.propertyType);
-    }
-
-    // Filter by location
-    if (filters?.location) {
-      const keywords = locationKeywords[filters.location] || [filters.location];
-      result = result.filter(p => {
-        const locationLower = p.location.toLowerCase();
-        return keywords.some(keyword => locationLower.includes(keyword));
-      });
-    }
-
-    // Filter by price range
-    if (filters?.priceRange) {
-      const [min, max] = filters.priceRange.split('-').map(v => {
-        if (v.includes('+')) return Infinity;
-        return parseInt(v) || 0;
-      });
-      result = result.filter(p => {
-        const price = Number(p.price);
-        return price >= min && (max === Infinity || price <= max);
-      });
-    }
-
-    return result;
-  }, [properties, activeCategory, filters]);
-
-  const formatPrice = (price: number, currency: string) => {
-    return new Intl.NumberFormat('es-MX', {
-      style: 'currency',
-      currency: currency,
-      minimumFractionDigits: 0,
-    }).format(price);
-  };
+  const filteredProperties = useMemo(
+    () => filterProperties(properties, activeCategory, filters),
+    [properties, activeCategory, filters],
+  );
 
   const getPropertyImage = (property: Property, index: number) => {
     return property.image_url || fallbackImages[index % fallbackImages.length];

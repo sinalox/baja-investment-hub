@@ -15,6 +15,7 @@ import AdminLeads from "./pages/admin/AdminLeads";
 import LeadDetail from "./pages/admin/LeadDetail";
 import AdminReports from "./pages/admin/AdminReports";
 import PropertyDetail from "./pages/PropertyDetail";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +29,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/properties/:id" element={<PropertyDetail />} />
+            <Route path="/privacidad" element={<PrivacyPolicy />} />
             <Route path="/admin/login" element={<AdminAuth />} />
             <Route
               path="/admin"
