@@ -17,6 +17,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { formatPrice } from '@/lib/properties';
 import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -106,15 +107,12 @@ const AdminDashboard = () => {
     };
   });
 
+  // Presupuestos de leads (capturados en MXN)
   const formatCurrency = (value: number) => {
     if (value >= 1000000) {
-      return `$${(value / 1000000).toFixed(1)}M`;
+      return `$${(value / 1000000).toFixed(1)}M MXN`;
     }
-    return new Intl.NumberFormat('es-MX', {
-      style: 'currency',
-      currency: 'MXN',
-      minimumFractionDigits: 0,
-    }).format(value);
+    return formatPrice(value, 'MXN');
   };
 
   const propertyCards = [

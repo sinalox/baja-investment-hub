@@ -3,8 +3,16 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { MapPin, BedDouble, Bath, Maximize, ArrowRight, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { fetchActiveProperties, type Property } from '@/lib/publicApi';
-import { categoryHashes, filterProperties, formatPrice, type SearchFilters } from '@/lib/properties';
+import { fetchPublicProperties, type PublicProperty } from '@/lib/publicApi';
+import {
+  categoryHashes,
+  filterProperties,
+  formatArea,
+  formatPrice,
+  getTypeLabel,
+  PUBLIC_STATUS_LABELS,
+  type SearchFilters,
+} from '@/lib/properties';
 
 // Fallback images for properties without images
 import property1 from '@/assets/property-1.webp';
@@ -26,19 +34,13 @@ const categories = [
   { id: 'inversion', label: 'Inversión' },
 ];
 
-const typeLabels: Record<string, string> = {
-  casa: 'Casa',
-  oficina: 'Oficina',
-  lote: 'Lote Residencial',
-  inversion: 'Inversión',
-};
 
 const Properties = ({ filters }: PropertiesProps) => {
   const [activeCategory, setActiveCategory] = useState('all');
 
   const { data: properties = [], isLoading: loading } = useQuery({
     queryKey: ['public-properties'],
-    queryFn: fetchActiveProperties,
+    queryFn: fetchPublicProperties,
   });
 
   // Anclas del menú (#casas, #oficinas, #lotes, #inversion): seleccionan la
@@ -61,7 +63,7 @@ const Properties = ({ filters }: PropertiesProps) => {
     [properties, activeCategory, filters],
   );
 
-  const getPropertyImage = (property: Property, index: number) => {
+  const getPropertyImage = (property: PublicProperty, index: number) => {
     return property.image_url || fallbackImages[index % fallbackImages.length];
   };
 
@@ -151,18 +153,23 @@ const Properties = ({ filters }: PropertiesProps) => {
                     decoding="async"
                     className="relative w-full h-full object-contain transition-transform duration-700 group-hover:scale-105"
                   />
-                  {property.featured && (
+                  {PUBLIC_STATUS_LABELS[property.status] ? (
+                    <div className={`absolute top-3 left-3 px-3 py-1 text-xs font-semibold uppercase tracking-wide rounded-sm text-white ${property.status === 'sold' ? 'bg-red-600' : 'bg-amber-500'}`}>
+                      {PUBLIC_STATUS_LABELS[property.status]}
+                    </div>
+                  ) : property.featured && (
                     <div className="absolute top-3 left-3 bg-accent text-accent-foreground px-3 py-1 text-xs font-semibold rounded-sm">
                       Destacado
                     </div>
                   )}
                   <div className="absolute top-3 right-3 bg-background/90 backdrop-blur-sm px-3 py-1 text-xs font-medium rounded-sm">
-                    {typeLabels[property.type] || property.type}
+                    {getTypeLabel(property.type)}
                   </div>
                 </div>
 
                 {/* Content */}
                 <div className="p-5">
+                  <div className="mb-1 font-mono text-xs text-muted-foreground">Ref. {property.code}</div>
                   <h3 className="font-sans text-lg font-medium mb-2 line-clamp-1">
                     {property.title}
                   </h3>
@@ -173,13 +180,14 @@ const Properties = ({ filters }: PropertiesProps) => {
 
                   {/* Details */}
                   <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4 pb-4 border-b border-border">
-                    {property.beds && (
+                    {/* Solo si son > 0: un terreno tiene 0 y React pintaba "0" */}
+                    {(property.beds ?? 0) > 0 && (
                       <div className="flex items-center gap-1.5">
                         <BedDouble className="h-4 w-4" />
                         {property.beds}
                       </div>
                     )}
-                    {property.baths && (
+                    {(property.baths ?? 0) > 0 && (
                       <div className="flex items-center gap-1.5">
                         <Bath className="h-4 w-4" />
                         {property.baths}
@@ -187,7 +195,7 @@ const Properties = ({ filters }: PropertiesProps) => {
                     )}
                     <div className="flex items-center gap-1.5">
                       <Maximize className="h-4 w-4" />
-                      {property.area}
+                      {formatArea(property)}
                     </div>
                   </div>
 

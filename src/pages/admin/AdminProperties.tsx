@@ -28,34 +28,34 @@ import { Plus, Pencil, Trash2, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
-import { formatPrice } from '@/lib/properties';
+import { WORKFLOW_STATUS_LABELS, formatPrice, getTypeLabel } from '@/lib/properties';
+import { isVerificationExpired } from '@/components/admin/ficha/schema';
+import { useFichaSettings } from '@/components/admin/ficha/useFichaSettings';
+import FichaPdfButtons from '@/components/admin/ficha/FichaPdfButtons';
 
-type Property = Database['public']['Tables']['properties']['Row'];
-
-const typeLabels: Record<string, string> = {
-  casa: 'Casa',
-  oficina: 'Oficina',
-  lote: 'Lote',
-  inversion: 'Inversión',
+type Property = Database['public']['Tables']['properties']['Row'] & {
+  property_records: { workflow_status: string; last_verified_at: string | null } | null;
 };
 
-const statusColors: Record<string, string> = {
-  active: 'bg-green-500',
-  inactive: 'bg-gray-500',
-  sold: 'bg-red-500',
+// Visible en la web: publicada, apartada y vendida (con sello)
+const workflowColors: Record<string, string> = {
+  publicada: 'bg-green-600',
+  apartada: 'bg-amber-500',
+  vendida: 'bg-red-500',
 };
 
 const AdminProperties = () => {
   const [deleting, setDeleting] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { maxVerificationDays } = useFichaSettings();
 
   const { data: properties = [], isLoading: loading, isError } = useQuery({
     queryKey: ['admin-properties'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('properties')
-        .select('*')
+        .select('*, property_records(workflow_status, last_verified_at)')
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data as Property[];
@@ -163,6 +163,7 @@ const AdminProperties = () => {
                             )}
                             <div>
                               <div>{property.title}</div>
+                              <div className="font-mono text-xs text-muted-foreground">{property.code}</div>
                               {property.featured && (
                                 <Badge variant="secondary" className="text-xs">
                                   Destacado
@@ -171,19 +172,36 @@ const AdminProperties = () => {
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell>{typeLabels[property.type] || property.type}</TableCell>
+                        <TableCell>{getTypeLabel(property.type)}</TableCell>
                         <TableCell>{property.location}</TableCell>
                         <TableCell>
                           {formatPrice(Number(property.price), property.currency)}
                         </TableCell>
                         <TableCell>
-                          <Badge className={statusColors[property.status]}>
-                            {property.status === 'active' ? 'Activo' : 
-                             property.status === 'inactive' ? 'Inactivo' : 'Vendido'}
-                          </Badge>
+                          {(() => {
+                            const workflow = property.property_records?.workflow_status ?? 'borrador';
+                            const isPublic = workflow === 'publicada' || workflow === 'apartada';
+                            const expired = isPublic && isVerificationExpired(
+                              property.property_records?.last_verified_at, maxVerificationDays,
+                            );
+                            return (
+                              <div className="flex flex-col items-start gap-1">
+                                <Badge className={workflowColors[workflow]} variant={workflowColors[workflow] ? 'default' : 'outline'}>
+                                  {WORKFLOW_STATUS_LABELS[workflow] ?? workflow}
+                                </Badge>
+                                {expired && (
+                                  <span className="text-xs text-amber-700">Verificación vencida</span>
+                                )}
+                              </div>
+                            );
+                          })()}
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
+                            <FichaPdfButtons
+                              propertyId={property.id}
+                              isPublic={['publicada', 'apartada', 'vendida'].includes(property.property_records?.workflow_status ?? '')}
+                            />
                             <Button asChild variant="outline" size="sm">
                               <Link to={`/admin/properties/${property.id}/edit`}>
                                 <Pencil className="h-4 w-4" />

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Search, MapPin, Home, DollarSign, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { emptyFilters, type SearchFilters } from '@/lib/properties';
+import { CURRENCIES, PRICE_RANGES, emptyFilters, type SearchFilters } from '@/lib/properties';
 
 interface PropertySearchProps {
   onSearch?: (filters: SearchFilters) => void;
@@ -12,6 +12,8 @@ const PropertySearch = ({ onSearch }: PropertySearchProps) => {
 
   const handleChange = (field: keyof SearchFilters, value: string) => {
     const newFilters = { ...filters, [field]: value };
+    // Los rangos dependen de la moneda: al cambiarla se reinicia el rango
+    if (field === 'currency') newFilters.priceRange = '';
     setFilters(newFilters);
     // Auto-search on change for real-time filtering
     onSearch?.(newFilters);
@@ -80,26 +82,45 @@ const PropertySearch = ({ onSearch }: PropertySearchProps) => {
               </div>
             </div>
 
-            {/* Price Range */}
+            {/* Moneda + rango de precio (sin conversión: el rango aplica a la moneda elegida) */}
             <div className="relative">
-              <label className="sr-only md:not-sr-only md:block text-sm font-medium text-muted-foreground md:mb-2">
-                Rango de precio
-              </label>
-              <div className="relative">
-                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <select
-                  value={filters.priceRange}
-                  onChange={(e) => handleChange('priceRange', e.target.value)}
-                  className="w-full h-12 pl-10 pr-9 bg-secondary border-0 rounded-sm text-foreground focus:ring-2 focus:ring-accent appearance-none cursor-pointer"
-                >
-                  <option value="">Cualquier precio</option>
-                  <option value="0-500000">Hasta $500,000 MXN</option>
-                  <option value="500000-1000000">$500,000 - $1,000,000 MXN</option>
-                  <option value="1000000-2000000">$1,000,000 - $2,000,000 MXN</option>
-                  <option value="2000000-5000000">$2,000,000 - $5,000,000 MXN</option>
-                  <option value="5000000+">$5,000,000+ MXN</option>
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <span className="sr-only md:not-sr-only md:block text-sm font-medium text-muted-foreground md:mb-2">
+                Precio
+              </span>
+              <div className="flex gap-2">
+                <div className="relative w-28 shrink-0">
+                  <label htmlFor="search-currency" className="sr-only">Moneda</label>
+                  <select
+                    id="search-currency"
+                    value={filters.currency}
+                    onChange={(e) => handleChange('currency', e.target.value)}
+                    className="w-full h-12 pl-3 pr-8 bg-secondary border-0 rounded-sm text-foreground focus:ring-2 focus:ring-accent appearance-none cursor-pointer"
+                  >
+                    <option value="">Moneda</option>
+                    {CURRENCIES.map((currency) => (
+                      <option key={currency} value={currency}>{currency}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                </div>
+                <div className="relative min-w-0 flex-1">
+                  <label htmlFor="search-price" className="sr-only">Rango de precio</label>
+                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <select
+                    id="search-price"
+                    value={filters.priceRange}
+                    onChange={(e) => handleChange('priceRange', e.target.value)}
+                    disabled={!filters.currency}
+                    className="w-full h-12 pl-10 pr-9 bg-secondary border-0 rounded-sm text-foreground focus:ring-2 focus:ring-accent appearance-none cursor-pointer disabled:cursor-not-allowed disabled:text-muted-foreground truncate"
+                  >
+                    <option value="">{filters.currency ? 'Cualquier precio' : 'Elige moneda'}</option>
+                    {filters.currency &&
+                      PRICE_RANGES[filters.currency].map((range) => (
+                        <option key={range.value} value={range.value}>{range.label}</option>
+                      ))}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                </div>
               </div>
             </div>
 

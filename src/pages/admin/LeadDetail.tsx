@@ -30,6 +30,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import InteractionModal from '@/components/admin/InteractionModal';
+import { formatPrice } from '@/lib/properties';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -146,8 +147,10 @@ const LeadDetail = () => {
         .eq('status', 'active')
         .limit(5);
 
+      // Los presupuestos de los leads se capturan en MXN: sin convertir
+      // monedas, solo se comparan contra propiedades en MXN
       if (lead.budget_max) {
-        query = query.lte('price', lead.budget_max);
+        query = query.eq('currency', 'MXN').lte('price', lead.budget_max);
       }
 
       const { data, error } = await query;
@@ -215,14 +218,6 @@ const LeadDetail = () => {
       default:
         return '';
     }
-  };
-
-  const formatCurrency = (price: number, currency: string) => {
-    return new Intl.NumberFormat('es-MX', {
-      style: 'currency',
-      currency: currency,
-      minimumFractionDigits: 0,
-    }).format(price);
   };
 
   if (loadingLead) {
@@ -349,10 +344,10 @@ const LeadDetail = () => {
                     <p className="text-sm text-muted-foreground mb-2">Presupuesto</p>
                     <p className="font-medium">
                       {lead.budget_min && lead.budget_max
-                        ? `${formatCurrency(lead.budget_min, 'MXN')} - ${formatCurrency(lead.budget_max, 'MXN')}`
+                        ? `${formatPrice(lead.budget_min, 'MXN')} - ${formatPrice(lead.budget_max, 'MXN')}`
                         : lead.budget_max
-                        ? `Hasta ${formatCurrency(lead.budget_max, 'MXN')}`
-                        : `Desde ${formatCurrency(lead.budget_min!, 'MXN')}`}
+                        ? `Hasta ${formatPrice(lead.budget_max, 'MXN')}`
+                        : `Desde ${formatPrice(lead.budget_min!, 'MXN')}`}
                     </p>
                   </div>
                 )}
@@ -493,7 +488,7 @@ const LeadDetail = () => {
                           </p>
                           <div className="flex items-center justify-between">
                             <span className="font-semibold text-accent">
-                              {formatCurrency(property.price, property.currency)}
+                              {formatPrice(property.price, property.currency)}
                             </span>
                             <Button variant="outline" size="sm" asChild>
                               <Link to={`/admin/properties/${property.id}/edit`}>

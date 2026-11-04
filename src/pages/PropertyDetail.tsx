@@ -3,9 +3,6 @@ import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
     MapPin,
-    BedDouble,
-    Bath,
-    Maximize,
     ArrowLeft,
     Heart,
     Share2,
@@ -30,8 +27,18 @@ import Footer from '@/components/layout/Footer';
 import { useToast } from '@/hooks/use-toast';
 import { fetchProperty } from '@/lib/publicApi';
 import { phoneUrl, whatsappLink } from '@/config/site';
-import { formatPrice, getPropertyImages } from '@/lib/properties';
+import { PUBLIC_STATUS_LABELS, formatAmount, formatDate, formatPrice, getPropertyImages, getTypeLabel } from '@/lib/properties';
+import {
+    ConditionsSection,
+    Differentiators,
+    KeyFacts,
+    LandSection,
+    LocationSection,
+    ServicesSection,
+    VideoSection,
+} from '@/components/property/PropertyFacts';
 import PropertyGallery from '@/components/property/PropertyGallery';
+import DownloadFichaButton from '@/components/property/DownloadFichaButton';
 import {
     HONEYPOT_FIELD,
     getFieldErrors,
@@ -44,12 +51,6 @@ import {
 // Fallback image
 import property1 from '@/assets/property-1.webp';
 
-const typeLabels: Record<string, string> = {
-    casa: 'Casa',
-    oficina: 'Oficina',
-    lote: 'Lote Residencial',
-    inversion: 'Terreno de Inversión',
-};
 
 const emptyForm = {
     name: '',
@@ -121,7 +122,7 @@ const PropertyDetail = () => {
 
         try {
             const notesPrefix = property
-                ? `Interesado en: ${property.title}\nUbicación: ${property.location}\nPrecio: ${formatPrice(Number(property.price), property.currency)}`
+                ? `Interesado en: ${property.code} · ${property.title}\nUbicación: ${property.location}\nPrecio: ${formatPrice(Number(property.price), property.currency)}`
                 : undefined;
             await insertPublicLead(result.data, 'pagina_propiedad', notesPrefix);
             onSuccess();
@@ -165,7 +166,18 @@ const PropertyDetail = () => {
 
     const price = formatPrice(Number(property.price), property.currency);
     const whatsappHref = whatsappLink(
-        `Hola, me interesa la propiedad "${property.title}" (${price}). ${window.location.href}`,
+        `Hola, me interesa la propiedad ${property.code} "${property.title}" (${price}). ${window.location.href}`,
+    );
+    const isSold = property.status === 'sold';
+    const statusLabel = PUBLIC_STATUS_LABELS[property.status];
+    const priceUpdated = formatDate(property.price_updated_at);
+    const ctaLabel = property.cta?.trim() || 'Me interesa esta propiedad';
+    // Folio y fecha de actualización del precio, debajo del precio
+    const priceMeta = (
+        <p className="text-xs text-muted-foreground">
+            Ref. <span className="font-mono text-foreground">{property.code}</span>
+            {priceUpdated && <> · Precio actualizado el {priceUpdated}</>}
+        </p>
     );
     const galleryImages = getPropertyImages(property);
     const propertyImages = galleryImages.length > 0 ? galleryImages : [property1];
@@ -211,7 +223,11 @@ const PropertyDetail = () => {
                                     images={propertyImages}
                                     title={property.title}
                                 >
-                                    {property.featured && (
+                                    {statusLabel ? (
+                                        <div className={`absolute top-3 left-3 md:top-4 md:left-4 px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm font-semibold uppercase tracking-wide rounded-sm text-white ${isSold ? 'bg-red-600' : 'bg-amber-500'}`}>
+                                            {statusLabel}
+                                        </div>
+                                    ) : property.featured && (
                                         <div className="absolute top-3 left-3 md:top-4 md:left-4 bg-accent text-accent-foreground px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm font-semibold rounded-sm">
                                             Propiedad Destacada
                                         </div>
@@ -235,7 +251,7 @@ const PropertyDetail = () => {
                                 <div className="flex items-start justify-between gap-4 mb-4">
                                     <div className="min-w-0">
                                         <span className="text-accent text-xs md:text-sm font-semibold uppercase tracking-wider">
-                                            {typeLabels[property.type] || property.type}
+                                            {getTypeLabel(property.type)}
                                         </span>
                                         <h1 className="text-[1.6rem] leading-tight lg:text-3xl font-sans font-semibold mt-1 md:mt-2">
                                             {property.title}
@@ -245,46 +261,16 @@ const PropertyDetail = () => {
                                             <span>{property.location}</span>
                                         </div>
                                         {/* Precio visible arriba en móvil (en escritorio va en la tarjeta lateral) */}
-                                        <div className="lg:hidden mt-3 text-2xl font-sans font-bold text-foreground">
-                                            {price}
+                                        <div className="lg:hidden mt-3 space-y-0.5">
+                                            <div className="text-2xl font-sans font-bold text-foreground">{price}</div>
+                                            {priceMeta}
                                         </div>
+                                        <Differentiators items={property.differentiators} />
+                                        {!isSold && <DownloadFichaButton property={property} className="mt-4 lg:hidden" />}
                                     </div>
                                 </div>
 
-                                {/* Features */}
-                                <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap sm:gap-6 py-4 md:py-6 border-y border-border">
-                                    {property.beds && (
-                                        <div className="flex flex-col items-center text-center gap-1.5 sm:flex-row sm:text-left sm:gap-3">
-                                            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-secondary rounded-lg flex items-center justify-center">
-                                                <BedDouble className="h-6 w-6 text-accent" />
-                                            </div>
-                                            <div>
-                                                <div className="font-semibold">{property.beds}</div>
-                                                <div className="text-xs sm:text-sm text-muted-foreground">Recámaras</div>
-                                            </div>
-                                        </div>
-                                    )}
-                                    {property.baths && (
-                                        <div className="flex flex-col items-center text-center gap-1.5 sm:flex-row sm:text-left sm:gap-3">
-                                            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-secondary rounded-lg flex items-center justify-center">
-                                                <Bath className="h-6 w-6 text-accent" />
-                                            </div>
-                                            <div>
-                                                <div className="font-semibold">{property.baths}</div>
-                                                <div className="text-xs sm:text-sm text-muted-foreground">Baños</div>
-                                            </div>
-                                        </div>
-                                    )}
-                                    <div className="flex flex-col items-center text-center gap-1.5 sm:flex-row sm:text-left sm:gap-3">
-                                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-secondary rounded-lg flex items-center justify-center">
-                                            <Maximize className="h-6 w-6 text-accent" />
-                                        </div>
-                                        <div>
-                                            <div className="font-semibold">{property.area}</div>
-                                            <div className="text-xs sm:text-sm text-muted-foreground">Superficie</div>
-                                        </div>
-                                    </div>
-                                </div>
+                                <KeyFacts property={property} />
 
                                 {/* Description */}
                                 {property.description && (
@@ -295,6 +281,12 @@ const PropertyDetail = () => {
                                         </p>
                                     </div>
                                 )}
+
+                                <LocationSection property={property} />
+                                <LandSection property={property} />
+                                <ServicesSection services={property.services} />
+                                <ConditionsSection property={property} />
+                                <VideoSection url={property.video_url} title={property.title} />
                             </div>
                         </div>
 
@@ -306,8 +298,17 @@ const PropertyDetail = () => {
                                     <div className="text-3xl font-sans font-bold text-foreground">
                                         {price}
                                     </div>
+                                    <div className="mt-1">{priceMeta}</div>
                                 </div>
 
+                                {isSold ? (
+                                    <div className="space-y-3 text-sm">
+                                        <p className="rounded-md bg-red-50 p-3 text-red-700">Esta propiedad ya se vendió.</p>
+                                        <Button variant="outline" size="lg" className="w-full" asChild>
+                                            <Link to="/#propiedades">Ver propiedades disponibles</Link>
+                                        </Button>
+                                    </div>
+                                ) : (
                                 <div className="space-y-3">
                                     <Button
                                         variant="gold"
@@ -316,7 +317,7 @@ const PropertyDetail = () => {
                                         onClick={() => setIsInterestModalOpen(true)}
                                     >
                                         <Heart className="h-5 w-5" />
-                                        Me interesa esta propiedad
+                                        {ctaLabel}
                                     </Button>
 
                                     <Button variant="outline" size="lg" className="w-full" asChild>
@@ -332,7 +333,10 @@ const PropertyDetail = () => {
                                             Llamar ahora
                                         </a>
                                     </Button>
+
+                                    <DownloadFichaButton property={property} />
                                 </div>
+                                )}
 
                                 <div className="pt-4 border-t border-border">
                                     <p className="text-sm text-muted-foreground text-center">
@@ -347,13 +351,23 @@ const PropertyDetail = () => {
 
             <Footer />
 
-            {/* Barra de acciones fija en móvil */}
+            {/* Barra de acciones fija en móvil (vendida: solo enlace al catálogo) */}
             <div className="lg:hidden fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 backdrop-blur-md px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-4px_16px_rgba(0,0,0,0.06)]">
                 <div className="flex items-center gap-2">
                     <div className="min-w-0 flex-1">
-                        <div className="text-[0.7rem] leading-none text-muted-foreground">Precio</div>
-                        <div className="truncate font-sans text-lg font-bold leading-tight">{price}</div>
+                        {/* El código de moneda va en la etiqueta para que el número quepa completo */}
+                        <div className="text-[0.7rem] leading-none text-muted-foreground">
+                            {isSold ? 'Vendida' : 'Precio'} · <span className="font-semibold text-foreground">{property.currency}</span>
+                        </div>
+                        <div className="truncate font-sans text-lg font-bold leading-tight">
+                            {formatAmount(Number(property.price))}
+                        </div>
                     </div>
+                    {isSold ? (
+                        <Button variant="outline" className="h-11 shrink-0" asChild>
+                            <Link to="/#propiedades">Ver disponibles</Link>
+                        </Button>
+                    ) : (<>
                     <Button
                         variant="outline"
                         size="icon"
@@ -380,6 +394,7 @@ const PropertyDetail = () => {
                     >
                         Me interesa
                     </Button>
+                    </>)}
                 </div>
             </div>
 

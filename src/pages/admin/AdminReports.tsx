@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { supabase } from '@/integrations/supabase/client';
+import { formatPrice } from '@/lib/properties';
 import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Users, TrendingUp, Target, DollarSign } from 'lucide-react';
@@ -86,15 +87,12 @@ const AdminReports = () => {
     count,
   }));
 
+  // Presupuestos de leads (capturados en MXN)
   const formatCurrency = (value: number) => {
     if (value >= 1000000) {
-      return `$${(value / 1000000).toFixed(1)}M`;
+      return `$${(value / 1000000).toFixed(1)}M MXN`;
     }
-    return new Intl.NumberFormat('es-MX', {
-      style: 'currency',
-      currency: 'MXN',
-      minimumFractionDigits: 0,
-    }).format(value);
+    return formatPrice(value, 'MXN');
   };
 
   const chartConfig = {
