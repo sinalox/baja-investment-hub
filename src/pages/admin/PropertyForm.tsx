@@ -53,7 +53,7 @@ type TabId = (typeof TABS)[number]['id'];
 const FIELD_TABS: Record<string, TabId> = {
   title: 'A', type: 'A', featured: 'A', owner_name: 'A', owner_contact: 'A', contract_type: 'A', contract_valid_until: 'A',
   location: 'B', arrival_reference: 'B', distances: 'B', access_status: 'B', maps_url: 'B', publish_exact_location: 'B',
-  area_m2: 'C', frontage_m: 'C', depth_m: 'C', measures_note: 'C', lot_type: 'C', topography: 'C', beds: 'C', baths: 'C',
+  area_m2: 'C', built_area_m2: 'C', frontage_m: 'C', depth_m: 'C', measures_note: 'C', lot_type: 'C', topography: 'C', beds: 'C', baths: 'C',
   deed_area_m2: 'C', real_area_m2: 'C', measures_differ: 'C', measures_diff_note: 'C', land_use: 'C', land_use_confirmed: 'C',
   price: 'D', currency: 'D', down_payment: 'D', term_months: 'D', monthly_payment: 'D', interest_and_fees: 'D',
   financing_confirmed: 'D', payment_requirements: 'D', publish_payment_requirements: 'D', buyer_costs: 'D',

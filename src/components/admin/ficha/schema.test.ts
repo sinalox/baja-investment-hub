@@ -122,6 +122,30 @@ describe('toPropertyPayload', () => {
     expect(payload.category).toBe('lote');
   });
 
+  it('maps construction m² separately from land m²', () => {
+    const values = baseValues();
+    values.property.area_m2 = '187.5';
+    values.property.built_area_m2 = '220';
+    const payload = toPropertyPayload(values);
+    expect(payload.area_m2).toBe(187.5);
+    expect(payload.built_area_m2).toBe(220);
+    values.property.built_area_m2 = '';
+    expect(toPropertyPayload(values).built_area_m2).toBeNull();
+    values.property.built_area_m2 = '-3';
+    expect(errorsOf(values)).toEqual(['property.built_area_m2: Debe ser un número mayor a 0']);
+  });
+
+  it('accepts half baths as decimal or fraction and stores the number', () => {
+    const values = baseValues();
+    for (const [input, stored] of [['3.5', 3.5], ['3 1/2', 3.5], ['3½', 3.5], ['2', 2], ['', null]] as const) {
+      values.property.baths = input;
+      expect(errorsOf(values)).toEqual([]);
+      expect(toPropertyPayload(values).baths).toBe(stored);
+    }
+    values.property.baths = '3.25';
+    expect(errorsOf(values)[0]).toMatch(/^property.baths: Usa un número entero o con medio baño/);
+  });
+
   it('keeps the legacy area text when there are no m²', () => {
     expect(toPropertyPayload(baseValues(), '187').area).toBe('187');
   });

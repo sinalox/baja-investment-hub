@@ -120,6 +120,7 @@ export type Database = {
           area_m2: number | null
           arrival_reference: string | null
           baths: number | null
+          built_area_m2: number | null
           beds: number | null
           category: string
           code: string
@@ -152,6 +153,7 @@ export type Database = {
           area_m2?: number | null
           arrival_reference?: string | null
           baths?: number | null
+          built_area_m2?: number | null
           beds?: number | null
           category: string
           code?: string
@@ -184,6 +186,7 @@ export type Database = {
           area_m2?: number | null
           arrival_reference?: string | null
           baths?: number | null
+          built_area_m2?: number | null
           beds?: number | null
           category?: string
           code?: string
@@ -454,6 +457,7 @@ export type Database = {
           arrival_reference: string | null
           baths: number | null
           beds: number | null
+          built_area_m2: number | null
           buyer_costs: string | null
           buyer_costs_status: string | null
           code: string | null

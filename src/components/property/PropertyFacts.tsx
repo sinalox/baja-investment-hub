@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import {
-  Bath, BedDouble, CheckCircle2, CircleDashed, CircleHelp, ExternalLink, MapPin, Maximize, PlayCircle, Ruler, XCircle,
+  Bath, BedDouble, Building2, CheckCircle2, CircleDashed, CircleHelp, ExternalLink, MapPin, Maximize, PlayCircle, Ruler, XCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { PublicProperty } from '@/lib/publicApi';
@@ -11,8 +11,10 @@ import {
   SERVICE_STATUS_LABELS,
   TENURE_LABELS,
   formatArea,
+  formatBaths,
   formatMeasures,
   formatPrice,
+  formatSquareMeters,
   getVideoSource,
 } from '@/lib/properties';
 
@@ -52,8 +54,11 @@ const Fact = ({ icon: Icon, value, label }: { icon: typeof Maximize; value: stri
 export const KeyFacts = ({ property }: { property: PublicProperty }) => {
   const facts = [
     (property.beds ?? 0) > 0 && { icon: BedDouble, value: String(property.beds), label: 'Recámaras' },
-    (property.baths ?? 0) > 0 && { icon: Bath, value: String(property.baths), label: 'Baños' },
-    formatArea(property) && { icon: Maximize, value: formatArea(property), label: 'Superficie' },
+    (property.baths ?? 0) > 0 && { icon: Bath, value: formatBaths(property.baths), label: 'Baños' },
+    formatArea(property) && { icon: Maximize, value: formatArea(property), label: 'Terreno' },
+    property.built_area_m2 != null && {
+      icon: Building2, value: formatSquareMeters(property.built_area_m2), label: 'Construcción',
+    },
     formatMeasures(property.frontage_m, property.depth_m) && {
       icon: Ruler, value: formatMeasures(property.frontage_m, property.depth_m), label: 'Frente × fondo',
     },

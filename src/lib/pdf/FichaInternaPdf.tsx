@@ -9,13 +9,15 @@ import {
   TENURE_LABELS,
   WORKFLOW_STATUS_LABELS,
   formatArea,
+  formatBaths,
   formatDate,
   formatMeasures,
   formatPrice,
+  formatSquareMeters,
   getTypeLabel,
 } from '@/lib/properties';
 import { PdfFooter, PdfHeader, Row, Section } from './common';
-import { colors, styles } from './theme';
+import { colors, sanitizeForPdf, styles } from './theme';
 import type { PdfImage } from './images';
 
 type Tables = Database['public']['Tables'];
@@ -36,7 +38,12 @@ const published = (value: string | null | undefined, isPublished: boolean) =>
 
 const yesNo = (v: boolean | null | undefined) => (v ? 'Sí' : 'No');
 
-const FichaInternaPdf = ({ property: p, record: r, services, documents, cover, logo, generatedAt }: Props) => {
+const FichaInternaPdf = ({ property, record, services: rawServices, documents: rawDocuments, cover, logo, generatedAt }: Props) => {
+  // Sin emojis ni caracteres que Helvetica no puede dibujar
+  const p = sanitizeForPdf(property);
+  const r = sanitizeForPdf(record);
+  const services = rawServices.map(sanitizeForPdf);
+  const documents = rawDocuments.map(sanitizeForPdf);
   const money = (v: number | null) => (v != null ? formatPrice(v, p.currency) : null);
   const docsByType = Object.fromEntries(documents.map((d) => [d.doc_type, d]));
   const servicesByName = Object.fromEntries(services.map((s) => [s.service, s]));
@@ -82,7 +89,8 @@ const FichaInternaPdf = ({ property: p, record: r, services, documents, cover, l
         </Section>
 
         <Section title="C. Superficie y características">
-          <Row label="Superficie" value={formatArea(p)} />
+          <Row label="Terreno" value={formatArea(p)} />
+          <Row label="Construcción" value={formatSquareMeters(p.built_area_m2)} />
           <Row label="Frente × fondo" value={formatMeasures(p.frontage_m, p.depth_m)} />
           <Row label="Nota de medidas" value={p.measures_note} />
           <Row label="Escritura vs. real" value={r.measures_differ
@@ -91,7 +99,7 @@ const FichaInternaPdf = ({ property: p, record: r, services, documents, cover, l
           <Row label="Tipo de lote" value={p.lot_type.map((t) => LOT_TYPE_LABELS[t] ?? t).join(' · ')} />
           <Row label="Topografía" value={p.topography} />
           <Row label="Uso de suelo" value={published(r.land_use, r.land_use_confirmed)} />
-          <Row label="Recámaras / baños" value={`${p.beds ?? 0} / ${p.baths ?? 0}`} />
+          <Row label="Recámaras / baños" value={`${p.beds ?? 0} / ${formatBaths(p.baths ?? 0)}`} />
         </Section>
 
         <Section title="D. Precio y condiciones">

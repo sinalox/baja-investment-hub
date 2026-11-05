@@ -48,3 +48,42 @@ export const fileName = (code: string, title: string, suffix = '') =>
   `Ficha-${code}-${title}`
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .replace(/[^\w-]+/g, '-').replace(/-+/g, '-').replace(/-$/, '') + `${suffix}.pdf`;
+
+// Helvetica (fuente estándar del PDF) solo tiene los caracteres de WinAnsi
+// (cp1252): los emojis y otros símbolos salen como basura ("<á", "=Í"). Se
+// eliminan y se limpian los espacios que dejan. Acentos, ñ, ², ×, • y
+// comillas tipográficas sí están.
+const CP1252_EXTRA = '€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ';
+const isPdfSafe = (ch: string) => {
+  const code = ch.codePointAt(0) ?? 0;
+  return ch === '\n' || ch === '\t' || (code >= 0x20 && code <= 0x7e) || (code >= 0xa0 && code <= 0xff)
+    || CP1252_EXTRA.includes(ch);
+};
+
+export const toPdfText = (value: string) =>
+  Array.from(value)
+    .filter(isPdfSafe)
+    .join('')
+    .split('\n')
+    .map((line) => line.replace(/[ \t]{2,}/g, ' ').replace(/^[ \t]+/, '').trimEnd())
+    .join('\n');
+
+// Descripciones capturadas con una línea en blanco entre cada viñeta: se
+// juntan las viñetas consecutivas y se deja como máximo una línea en blanco
+export const compactText = (value: string) =>
+  value
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/\n\n(?=[•\-*] )/g, '\n');
+
+// Aplica toPdfText a los campos de texto (y listas de texto) de un objeto
+export const sanitizeForPdf = <T extends object>(obj: T): T =>
+  Object.fromEntries(
+    Object.entries(obj).map(([key, value]) => [
+      key,
+      typeof value === 'string'
+        ? toPdfText(value)
+        : Array.isArray(value) && value.every((v) => typeof v === 'string')
+          ? value.map(toPdfText)
+          : value,
+    ]),
+  ) as T;

@@ -8,13 +8,15 @@ import {
   SERVICE_STATUS_LABELS,
   TENURE_LABELS,
   formatArea,
+  formatBaths,
   formatDate,
   formatMeasures,
   formatPrice,
+  formatSquareMeters,
   getTypeLabel,
 } from '@/lib/properties';
-import { PdfFooter, PdfHeader, Section } from './common';
-import { colors, filledRows, styles } from './theme';
+import { LongTextSection, PdfFooter, PdfHeader, Section } from './common';
+import { colors, compactText, filledRows, sanitizeForPdf, styles } from './theme';
 import type { PdfImage } from './images';
 
 // Ficha para el cliente. SOLO recibe datos de la vista public_properties
@@ -47,17 +49,21 @@ const Rows = ({ rows }: { rows: [string, string][] }) => (
   </>
 );
 
-const FichaClientePdf = ({ property: p, cover, photos, logo, qr, url }: Props) => {
+const FichaClientePdf = ({ property, cover, photos, logo, qr, url }: Props) => {
+  // Sin emojis ni caracteres que Helvetica no puede dibujar
+  const p = sanitizeForPdf(property);
   const price = formatPrice(Number(p.price), p.currency);
+  const photoRows = Array.from({ length: Math.ceil(photos.length / 2) }, (_, i) => photos.slice(i * 2, i * 2 + 2));
   const updated = formatDate(p.price_updated_at);
   const status = PUBLIC_STATUS_LABELS[p.status];
   const money = (v: number | null) => (v != null ? formatPrice(v, p.currency) : null);
 
   const facts = [
-    formatArea(p) && { value: formatArea(p), label: 'Superficie' },
+    formatArea(p) && { value: formatArea(p), label: 'Terreno' },
+    p.built_area_m2 != null && { value: formatSquareMeters(p.built_area_m2), label: 'Construcción' },
     formatMeasures(p.frontage_m, p.depth_m) && { value: formatMeasures(p.frontage_m, p.depth_m), label: 'Frente × fondo' },
     (p.beds ?? 0) > 0 && { value: String(p.beds), label: 'Recámaras' },
-    (p.baths ?? 0) > 0 && { value: String(p.baths), label: 'Baños' },
+    (p.baths ?? 0) > 0 && { value: formatBaths(p.baths), label: 'Baños' },
   ].filter(Boolean) as { value: string; label: string }[];
 
   const location = filledRows([
@@ -156,20 +162,20 @@ const FichaClientePdf = ({ property: p, cover, photos, logo, qr, url }: Props) =
         <PdfHeader logo={logo} />
         <PdfFooter note={legal} />
 
-        {photos.length > 0 && (
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 6 }}>
-            {photos.map((photo, i) => (
-              <View key={i} style={{ width: '48.5%', height: 125, backgroundColor: colors.soft, borderRadius: 4, overflow: 'hidden' }}>
+        {/* Filas explícitas de 2 (flexWrap + gap calcula mal la altura en
+            react-pdf y el texto siguiente se encimaba en las fotos) */}
+        {photoRows.map((row, r) => (
+          <View key={r} wrap={false} style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+            {row.map((photo, i) => (
+              <View key={i} style={{ width: '48.8%', height: 125, backgroundColor: colors.soft, borderRadius: 4, overflow: 'hidden' }}>
                 <Image src={photo.src} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
               </View>
             ))}
           </View>
-        )}
+        ))}
 
         {p.description && (
-          <Section title="Descripción">
-            <Text style={{ lineHeight: 1.5 }}>{p.description}</Text>
-          </Section>
+          <LongTextSection title="Descripción" lines={compactText(p.description).trim().split('\n')} />
         )}
         {location.length > 0 && <Section title="Ubicación"><Rows rows={location} /></Section>}
         {land.length > 0 && <Section title="Características"><Rows rows={land} /></Section>}

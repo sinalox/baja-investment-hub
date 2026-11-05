@@ -123,13 +123,13 @@ export const PRICE_RANGES: Record<Currency, { value: string; label: string }[]> 
   ],
 };
 
-// Superficie: m² numérico de la ficha; si no existe, el texto anterior
-export const formatArea = (property: { area_m2?: number | null; area?: string | null }) => {
-  if (property.area_m2 != null) {
-    return `${new Intl.NumberFormat('es-MX', { maximumFractionDigits: 2 }).format(property.area_m2)} m²`;
-  }
-  return property.area ?? '';
-};
+// "187.5 m²"
+export const formatSquareMeters = (value: number | null | undefined) =>
+  value != null ? `${new Intl.NumberFormat('es-MX', { maximumFractionDigits: 2 }).format(value)} m²` : '';
+
+// Terreno: m² numérico de la ficha; si no existe, el texto anterior
+export const formatArea = (property: { area_m2?: number | null; area?: string | null }) =>
+  property.area_m2 != null ? formatSquareMeters(property.area_m2) : property.area ?? '';
 
 // ---------------------------------------------------------------------------
 // Búsqueda y filtros del catálogo
@@ -264,4 +264,24 @@ export const getVideoSource = (url: string | null | undefined): VideoSource | nu
   const vimeo = value.match(/vimeo\.com\/(?:video\/)?(\d+)/i);
   if (vimeo) return { kind: 'embed', src: `https://player.vimeo.com/video/${vimeo[1]}` };
   return { kind: 'link', href: value };
+};
+
+// Baños con medios baños. Acepta "3", "3.5", "3,5", "3 1/2", "3½" o "½".
+// Devuelve null si está vacío y NaN si no es un número válido de medios.
+export const parseBaths = (input: string): number | null => {
+  const value = input.trim().replace(',', '.').replace(/\s+/g, ' ');
+  if (value === '') return null;
+  const match = value.match(/^(\d+)?\s*(?:(½)|(1\/2)|(\.\d+))?$/);
+  if (!match || (!match[1] && !match[2] && !match[3])) return Number.NaN;
+  const whole = match[1] ? Number(match[1]) : 0;
+  const fraction = match[2] || match[3] ? 0.5 : match[4] ? Number(`0${match[4]}`) : 0;
+  const result = whole + fraction;
+  return result * 2 === Math.trunc(result * 2) ? result : Number.NaN;
+};
+
+// 3.5 -> "3½"; 3 -> "3"
+export const formatBaths = (baths: number | null | undefined) => {
+  if (baths == null) return '';
+  const whole = Math.trunc(baths);
+  return baths - whole >= 0.5 ? `${whole || ''}½` : String(whole);
 };

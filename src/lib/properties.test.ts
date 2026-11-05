@@ -13,6 +13,9 @@ import {
   formatDate,
   formatMeasures,
   getVideoSource,
+  formatSquareMeters,
+  parseBaths,
+  formatBaths,
 } from './properties';
 
 const properties = [
@@ -185,5 +188,42 @@ describe('getVideoSource', () => {
     expect(getVideoSource('https://drive.google.com/file/d/x')).toEqual({ kind: 'link', href: 'https://drive.google.com/file/d/x' });
     expect(getVideoSource('javascript:alert(1)')).toBeNull();
     expect(getVideoSource('')).toBeNull();
+  });
+});
+
+describe('formatSquareMeters', () => {
+  it('formats construction and land areas', () => {
+    expect(formatSquareMeters(220)).toBe('220 m²');
+    expect(formatSquareMeters(187.5)).toBe('187.5 m²');
+    expect(formatSquareMeters(null)).toBe('');
+  });
+});
+
+describe('parseBaths', () => {
+  it('accepts whole numbers, decimals and fractions in half steps', () => {
+    expect(parseBaths('3')).toBe(3);
+    expect(parseBaths('3.5')).toBe(3.5);
+    expect(parseBaths('3,5')).toBe(3.5);
+    expect(parseBaths('3 1/2')).toBe(3.5);
+    expect(parseBaths('3½')).toBe(3.5);
+    expect(parseBaths(' 2 ½ ')).toBe(2.5);
+    expect(parseBaths('1/2')).toBe(0.5);
+    expect(parseBaths('0')).toBe(0);
+    expect(parseBaths('')).toBeNull();
+  });
+
+  it('rejects anything that is not a half step', () => {
+    for (const value of ['3.25', 'tres', '3 1/3', '-1', '3..5', '1/2 3']) {
+      expect(parseBaths(value)).toBeNaN();
+    }
+  });
+});
+
+describe('formatBaths', () => {
+  it('shows half baths as ½', () => {
+    expect(formatBaths(3.5)).toBe('3½');
+    expect(formatBaths(3)).toBe('3');
+    expect(formatBaths(0.5)).toBe('½');
+    expect(formatBaths(null)).toBe('');
   });
 });

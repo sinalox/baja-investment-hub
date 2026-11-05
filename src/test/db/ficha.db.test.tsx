@@ -150,6 +150,27 @@ describe.skipIf(!hasPostgres)('ficha técnica en Postgres (migraciones reales)',
     });
   });
 
+  describe('medios baños y metros de construcción (20261104120000)', () => {
+    it('acepta medios baños y m² de construcción, y la vista los expone', () => {
+      db.sql(`UPDATE properties SET baths = 2.5, built_area_m2 = 220 WHERE id = '${LOTE}'`, 'admin');
+      const row = db.json<PublicProperty>(`SELECT row_to_json(v) FROM public_properties v WHERE id = '${LOTE}'`, 'anon');
+      expect(row.baths).toBe(2.5);
+      expect(row.built_area_m2).toBe(220);
+    });
+
+    it('rechaza baños que no son enteros o medios, y construcción no positiva', () => {
+      expect(db.error(`UPDATE properties SET baths = 2.3 WHERE id = '${LOTE}'`, 'admin')).toMatch(/properties_baths_half_steps/);
+      expect(db.error(`UPDATE properties SET baths = -1 WHERE id = '${LOTE}'`, 'admin')).toMatch(/properties_baths_half_steps/);
+      expect(db.error(`UPDATE properties SET built_area_m2 = 0 WHERE id = '${LOTE}'`, 'admin')).toMatch(/check constraint/);
+    });
+
+    it('la migración es idempotente y conserva los permisos de la vista', () => {
+      db.applyMigration('20261104120000_built_area_half_baths.sql');
+      expect(db.sql('SELECT count(*) FROM public_properties', 'anon')).toBe('2');
+      expect(db.sql(`SELECT baths FROM properties WHERE id = '${LOTE}'`)).toBe('2.5');
+    });
+  });
+
   describe('seguridad: acceso anónimo', () => {
     it.each(['property_records', 'property_services', 'property_documents', 'app_settings'])(
       'anon no puede leer %s',

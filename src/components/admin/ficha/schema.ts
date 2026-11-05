@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { Database } from '@/integrations/supabase/types';
+import { parseBaths } from '@/lib/properties';
 
 // Modelo del formulario de la ficha técnica (docs/ficha-tecnica-spec.md).
 // El formulario trabaja con strings (lo que dan los inputs) y estos mappers
@@ -57,6 +58,11 @@ const nonNegativeInteger = z
   .string()
   .refine((v) => v.trim() === '' || (Number.isInteger(Number(v)) && Number(v) >= 0), 'Debe ser un número entero');
 
+// Baños: enteros o medios ("3.5", "3 1/2", "3½")
+const halfSteps = z
+  .string()
+  .refine((v) => !Number.isNaN(parseBaths(v)), 'Usa un número entero o con medio baño, p. ej. 2, 2.5 o 2 1/2');
+
 const url = z
   .string()
   .refine((v) => v.trim() === '' || /^https?:\/\/\S+$/i.test(v.trim()), 'Debe ser un enlace que empiece con https://');
@@ -87,13 +93,14 @@ export const fichaSchema = z.object({
     access_status: optionalEnum(ACCESS_STATUSES),
     // C. Superficie
     area_m2: positiveNumber,
+    built_area_m2: positiveNumber,
     frontage_m: positiveNumber,
     depth_m: positiveNumber,
     measures_note: text,
     lot_type: z.array(z.enum(LOT_TYPES)),
     topography: text,
     beds: nonNegativeInteger,
-    baths: nonNegativeInteger,
+    baths: halfSteps,
     // D. Precio
     price: z
       .string()
@@ -241,6 +248,7 @@ export const toFormValues = (
       distances: s(p?.distances),
       access_status: (p?.access_status as FichaValues['property']['access_status']) ?? '',
       area_m2: s(p?.area_m2),
+      built_area_m2: s(p?.built_area_m2),
       frontage_m: s(p?.frontage_m),
       depth_m: s(p?.depth_m),
       measures_note: s(p?.measures_note),
@@ -324,6 +332,7 @@ export const toPropertyPayload = (values: FichaValues, previousArea = ''): Prope
     distances: textOrNull(p.distances),
     access_status: p.access_status || null,
     area_m2: areaM2,
+    built_area_m2: numberOrNull(p.built_area_m2),
     // `area` (texto) se conserva por compatibilidad: se deriva de los m²
     area: areaM2 != null ? `${areaM2} m²` : previousArea,
     frontage_m: numberOrNull(p.frontage_m),
@@ -332,7 +341,7 @@ export const toPropertyPayload = (values: FichaValues, previousArea = ''): Prope
     lot_type: p.lot_type,
     topography: textOrNull(p.topography),
     beds: numberOrNull(p.beds),
-    baths: numberOrNull(p.baths),
+    baths: parseBaths(p.baths),
     price: Number(p.price),
     currency: p.currency,
     description: textOrNull(p.description),

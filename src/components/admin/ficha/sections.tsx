@@ -87,7 +87,9 @@ export const SectionSuperficie = () => {
   return (
     <div className="space-y-8">
       <FieldGroup>
-        <TextField name="property.area_m2" label="Superficie (m²)" visibility="P" type="number" />
+        <TextField name="property.area_m2" label="Terreno (m²)" visibility="P" type="number" />
+        <TextField name="property.built_area_m2" label="Construcción (m²)" visibility="P" type="number"
+          hint="Opcional. Déjalo vacío en lotes sin construcción." />
         <TextField name="property.topography" label="Topografía" visibility="P" placeholder="Ej. Plano, pendiente suave" />
         <TextField name="property.frontage_m" label="Frente (m)" visibility="P" type="number" />
         <TextField name="property.depth_m" label="Fondo (m)" visibility="P" type="number" />
@@ -95,7 +97,8 @@ export const SectionSuperficie = () => {
           hint="Se publica. Úsala para lotes irregulares." />
         <CheckboxGroupField name="property.lot_type" label="Tipo de lote" visibility="P" options={LOT_TYPE_LABELS} />
         <TextField name="property.beds" label="Recámaras" visibility="P" type="number" inputMode="numeric" />
-        <TextField name="property.baths" label="Baños" visibility="P" type="number" inputMode="numeric" />
+        <TextField name="property.baths" label="Baños" visibility="P" inputMode="decimal" placeholder="Ej. 2, 2.5 o 2 1/2"
+          hint="Acepta medios baños: 2.5, 2 1/2 o 2½" />
       </FieldGroup>
 
       <FieldGroup title="Medida de escritura vs. medida real" description="Interno: no se publica.">

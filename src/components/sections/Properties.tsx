@@ -1,13 +1,15 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { MapPin, BedDouble, Bath, Maximize, ArrowRight, Loader2 } from 'lucide-react';
+import { MapPin, BedDouble, Bath, Maximize, ArrowRight, Loader2, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { fetchPublicProperties, type PublicProperty } from '@/lib/publicApi';
 import {
   categoryHashes,
   filterProperties,
   formatArea,
+  formatBaths,
+  formatSquareMeters,
   formatPrice,
   getTypeLabel,
   PUBLIC_STATUS_LABELS,
@@ -190,13 +192,21 @@ const Properties = ({ filters }: PropertiesProps) => {
                     {(property.baths ?? 0) > 0 && (
                       <div className="flex items-center gap-1.5">
                         <Bath className="h-4 w-4" />
-                        {property.baths}
+                        {formatBaths(property.baths)}
                       </div>
                     )}
-                    <div className="flex items-center gap-1.5">
-                      <Maximize className="h-4 w-4" />
+                    <div className="flex items-center gap-1.5" title="Terreno">
+                      <Maximize className="h-4 w-4" aria-hidden="true" />
+                      <span className="sr-only">Terreno: </span>
                       {formatArea(property)}
                     </div>
+                    {property.built_area_m2 != null && (
+                      <div className="flex items-center gap-1.5" title="Construcción">
+                        <Building2 className="h-4 w-4" aria-hidden="true" />
+                        <span className="sr-only">Construcción: </span>
+                        {formatSquareMeters(property.built_area_m2)}
+                      </div>
+                    )}
                   </div>
 
                   {/* Price & CTA */}

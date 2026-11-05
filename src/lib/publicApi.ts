@@ -25,7 +25,7 @@ export type PublicProperty = Omit<ViewRow, RequiredColumns> & {
 export const PUBLIC_PROPERTY_COLUMNS = [
   'id', 'code', 'title', 'type', 'status', 'featured',
   'location', 'arrival_reference', 'distances', 'access_status', 'maps_url',
-  'area', 'area_m2', 'frontage_m', 'depth_m', 'measures_note', 'lot_type', 'topography',
+  'area', 'area_m2', 'built_area_m2', 'frontage_m', 'depth_m', 'measures_note', 'lot_type', 'topography',
   'land_use', 'beds', 'baths',
   'price', 'currency', 'price_updated_at',
   'down_payment', 'term_months', 'monthly_payment', 'interest_and_fees',
